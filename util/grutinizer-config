@@ -51,12 +51,12 @@ incdir=$GRUTSYS/include
 rpath="-Wl,-rpath=$libdir"
 grutlibs="-lTGRUTUtil -lTRawFormat -lGROOT -lTNSCLFormat -lTGEBFormat -lTGRUTUtil -lTNucleus -lTKinematics -lTReaction -lTSRIM -lTNSCLScalers"
 detlibs="-lTSega -lTDetector  -lTGretina -lTJanus -lTPhosWall -lTS800 -lTFastScint -lTCaesar -lTS800Sim -lTGretSim -lTDiamondDet
--lTLenda"
+-lTLenda -lTGenericDDAS"
+
 grutmore="-lTGRUTint -lTLoops -lTHistogramming "
 
 cflags="-std=c++0x -I$incdir"
-
-
+rootver=$(root-config --version | cut -f1 -d/ | cut -f2 -d.)
 
 usage="\
 Usage: grut-config [--version] [--cflags] [--libs] [--all-libs] [--libdir] [--root] [--help]"
@@ -130,7 +130,11 @@ while test $# -gt 0; do
         continue
       fi
       rootout="yes"
-      out="$out `root-config --cflags --glibs` -lPhysics -lSpectrum -lPyROOT -lMinuit -lMathMore"
+      if(( rootver <= 18)); then
+        out="$out `root-config --cflags --glibs` -lPhysics -lSpectrum -lMinuit -lMathMore -lPyROOT"
+      else
+        out="$out `root-config --cflags --glibs` -lPhysics -lSpectrum -lMinuit -lMathMore -lROOTTPython"
+      fi
       ;;
     --libdir)
         if test "x$libdirout" = "xyes" ; then
