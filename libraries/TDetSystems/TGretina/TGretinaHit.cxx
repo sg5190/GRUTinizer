@@ -45,9 +45,9 @@ void TGretinaHit::Copy(TObject &rhs) const {
 Float_t TGretinaHit::GetCoreEnergy() const {
   TChannel *channel = TChannel::GetChannel(Address());
   //printf("GetAddress() + i = 0x%08x\n",GetAddress()+i);
-  if(!channel)
-    return fCoreEnergy;
-  return channel->CalEnergy(fCoreEnergy);
+  if(!channel) return fCoreEnergy;
+  if(GetABDepth() < 0) return channel->CalEnergy(fCoreEnergy);
+  else return fCoreEnergy;
 }
 
 /*******************************************************************************/
@@ -58,9 +58,9 @@ Float_t TGretinaHit::GetCoreEnergy(int i) const {
   float charge = (float)GetCoreCharge(i) + gRandom->Uniform();
   TChannel *channel = TChannel::GetChannel(Address()+(i<<4));
   //printf("GetAddress() + i = 0x%08x\n",GetAddress()+i);
-  if(!channel)
-    return charge;
-  return channel->CalEnergy(charge);
+  if(!channel) return charge;
+  if(GetABDepth() <0) return channel->CalEnergy(charge);
+  else return charge;
 }
 
 /*******************************************************************************/
@@ -94,7 +94,7 @@ void TGretinaHit::BuildFrom(TSmartBuffer& buf){
   fWalkCorrection = raw.t0;
   fCrystalId = raw.crystal_id;
   fCoreEnergy = raw.tot_e;
-  fAB = 0;
+  fAB = -1;
 
   //fAddress = (1<<24) + (fCrystalId<<16);
   //fWAddress = (1<<24) + ( raw.board_id );

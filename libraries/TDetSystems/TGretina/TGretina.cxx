@@ -41,6 +41,10 @@ void TGretina::BuildAddback(int SortDepth, bool SortByEng) const {
   }
 
   std::vector<TGretinaHit> temp_hits = gretina_hits;
+  for(unsigned int i = 0; i < temp_hits.size(); i++) {
+    if(EngRange < 0) temp_hits.at(i).SetCoreEnergy(temp_hits.at(i).GetCoreEnergy());
+    else temp_hits.at(i).SetCoreEnergy(temp_hits.at(i).GetCoreEnergy(EngRange));
+  }
 
   //sort so that the first hit has the greatest energy
   //this way we can loop through i,j with i < j and know that
