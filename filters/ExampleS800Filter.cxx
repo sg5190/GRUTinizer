@@ -4,20 +4,24 @@
 
 #include "TRuntimeObjects.h"
 
-#include <TSega.h>
-#include <TJanusDDAS.h>
+#include <TGretina.h>
+#include <TS800.h>
 
 
 extern "C"
 bool FilterCondition(TRuntimeObjects& obj) {
 
-  TJanusDDAS *janus = obj.GetDetector<TJanusDDAS>();
 
-  if(!janus)
-    {return false;}
+  TGretina *gretina = obj.GetDetector<TGretina>();
+  TS800 *s800       = obj.GetDetector<TS800>();
+
+  if(!gretina)
+    return false;
+
+  if(!s800)
+    return false;
 
   return true;
-
 }
 
 
