@@ -50,11 +50,6 @@ Float_t TGretinaHit::GetCoreEnergy() const {
   if(!channel) return fCoreEnergy;
   if(GetABDepth() < 0) return channel->CalEnergy(fCoreEnergy);
   else return fCoreEnergy;
-/*  else {
-    std::cout << GetABDepth() << std::endl;
-    return fCoreEnergy;
-  }
-*/
 }
 
 /*******************************************************************************/
@@ -199,7 +194,7 @@ double TGretinaHit::GetDoppler(double beta,const TVector3 *vec, int EngRange) co
   gret_pos.SetZ(gret_pos.Z() - zoffset);
 
   if(EngRange>0) tmp = GetCoreEnergy(EngRange)*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
-  else tmp = fCoreEnergy*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
+  else tmp = GetCoreEnergy()*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
   return tmp;
 }
 
@@ -240,7 +235,7 @@ double TGretinaHit::GetDopplerYta(double beta, double yta, double xoffset, doubl
   gret_pos.SetY(gret_pos.Y() - (yoffset - yta));
   gret_pos.SetZ(gret_pos.Z() - zoffset);
   if(EngRange>0) tmp = GetCoreEnergy(EngRange)*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
-  else tmp = fCoreEnergy*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
+  else tmp = GetCoreEnergy()*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
   return tmp;
 }
 
