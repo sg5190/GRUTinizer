@@ -19,10 +19,14 @@ TInverseMap::~TInverseMap() { }
 
 
 TInverseMap *TInverseMap::Get(const char *filename) {
+  static int lines_displayed = 0;
   if(fInverseMap)
     return fInverseMap;
   if(strlen(filename)==0 || access(filename,F_OK)==-1) {
-    printf("no inverse map loaded and file \"%s\" not found.\n",filename);
+    if(lines_displayed < 10) {
+      std::cout << "\033[1;31mNo inverse map loaded or file " << filename << " does not exist\033[0m" << std::endl;
+      lines_displayed++;
+    }
     return 0;
   }
   fInverseMap = new TInverseMap(filename);
