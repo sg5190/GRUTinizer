@@ -11,7 +11,6 @@
 #include "TGretina.h"
 #include "TS800.h"
 
-
 TGretinaHit::TGretinaHit(){ Clear(); }
 
 TGretinaHit::~TGretinaHit(){ }
@@ -192,7 +191,7 @@ double TGretinaHit::GetDoppler(double beta,const TVector3 *vec, int EngRange) co
   gret_pos.SetX(gret_pos.X() - xoffset);
   gret_pos.SetY(gret_pos.Y() - yoffset);
   gret_pos.SetZ(gret_pos.Z() - zoffset);
-
+  
   if(EngRange>-1) tmp = GetCoreEnergy(EngRange)*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
   else tmp = GetCoreEnergy()*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
   return tmp;
@@ -234,55 +233,15 @@ double TGretinaHit::GetDopplerYta(double beta, double yta, double xoffset, doubl
   gret_pos.SetX(gret_pos.X() - xoffset);
   gret_pos.SetY(gret_pos.Y() - (yoffset - yta));
   gret_pos.SetZ(gret_pos.Z() - zoffset);
+
   if(EngRange>-1) tmp = GetCoreEnergy(EngRange)*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
   else tmp = GetCoreEnergy()*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
   return tmp;
 }
 
 /*******************************************************************************/
-/* Legacy - No Longer used and may be removed **********************************/
-/* Used by old Addback code to handle interaction points ***********************/
-/*******************************************************************************/
-void TGretinaHit::Add(const TGretinaHit& rhs) {
-
-  // qStash all interaction points
-  std::set<interaction_point> ips;
-  // Copy other information to self if needed
-  double my_core_energy = fCoreEnergy;
-  if(fCoreEnergy < rhs.fCoreEnergy) {
-    for(unsigned int i=0; i<rhs.fSegments.size(); i++){
-      ips.insert(rhs.fSegments[i]);
-    }
-
-    for(unsigned int i=0; i<fSegments.size(); i++){
-      ips.insert(fSegments[i]);
-    }
-    rhs.Copy(*this);
-    fCoreEnergy += my_core_energy;
-  } else {
-    for(unsigned int i=0; i<fSegments.size(); i++){
-      ips.insert(fSegments[i]);
-    }
-    for(unsigned int i=0; i<rhs.fSegments.size(); i++){
-      ips.insert(rhs.fSegments[i]);
-    }
-    fCoreEnergy += rhs.fCoreEnergy;
-  }
-
-  // Fill all interaction points
-  fNumberOfInteractions = 0;
-  fSegments.clear();
-  for(auto& point : ips){
-    if(fNumberOfInteractions >= MAXHPGESEGMENTS){
-      break;
-    }
-    fSegments.push_back(point);
-    fNumberOfInteractions++;
-  }
-}
-
-/*******************************************************************************/
-/* Used by Addback code to handle interaction points ***************************/
+/* Used by Nearest Neighbour Addback code to add energies **********************/
+/* and handle interaction points ***********************************************/
 /*******************************************************************************/
 void TGretinaHit::NNAdd(const TGretinaHit& rhs) {
   //copy original hit into singles
@@ -320,8 +279,7 @@ TVector3 TGretinaHit::GetLastPosition() const {
 void TGretinaHit::Print(Option_t *opt) const {
 
   std::cout << "TGretinaHit:" <<  std::endl;
-  //std::cout << "\tAddress:        \t0x" << std::hex << fAddress << std::dec << std::endl;
-  printf("\tAddress:        \t0x%08x\n",Address());
+  std::cout << "\tAddress:        \t0x" << std::hex << fAddress << std::dec << std::endl;
   std::cout << "\tHole:           \t" << GetHoleNumber()               << std::endl;
   std::cout << "\tCrystalNum      \t" << GetCrystalNumber()            << std::endl;
   std::cout << "\tCrystalId:      \t" << GetCrystalId()                << std::endl;
@@ -433,3 +391,41 @@ int TGretinaHit::GetDetnum() const {
   return output;
 }
 
+/*******************************************************************************/
+/* TInteractionPoint ***********************************************************/
+/* Used by TCluster to do tracking *********************************************/
+/* Currently not used for FRIB fast beam analysis ******************************/
+/*******************************************************************************/
+TInteractionPoint::TInteractionPoint(const TInteractionPoint &IP) {
+  this->Copy(IP);
+}
+
+void TInteractionPoint::Copy(const TInteractionPoint &IP) {
+  fSegNum      = IP.GetSegNum();
+  fEng         = IP.GetPreampE();
+  fDecompEng   = IP.GetDecompE();
+  fAssignedEng = IP.GetAssignE();
+  fOrder       = IP.GetOrder();
+  fLPosition   = IP.GetLocalPosition();
+}
+
+TVector3 TInteractionPoint::GetPosition(int xtal) const {
+  return TGretina::CrystalToGlobal(xtal, fLPosition.X(), fLPosition.Y(), fLPosition.Z());
+}
+
+
+void TInteractionPoint::Print(Option_t *opt) const {
+  TVector3 lv = GetLocalPosition();
+  printf("seg[%02i] wedge[%i]    %.1f / %.1f   [ %.1f, %.1f. %.1f] \n",
+          GetSegNum(),Wedge(),GetAssignE(),GetPreampE(),lv.X(),lv.Y(),lv.Z());
+}
+
+
+void TInteractionPoint::Clear(Option_t *opt) {
+    fSegNum      = -1;
+    fEng         = sqrt(-1);
+    fDecompEng   = sqrt(-1);
+    fAssignedEng = sqrt(-1);
+    fOrder       = -1;
+    fLPosition.SetXYZ(0,0,1);
+}

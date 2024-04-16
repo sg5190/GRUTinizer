@@ -13,6 +13,9 @@
 #include "TDetectorEnv.h"
 #include "TUnpackedEvent.h"
 
+#include "chrono"
+using namespace std::chrono;
+
 //#include "TMode3.h"
 
 ClassImp(TUnpackingLoop)
@@ -37,6 +40,8 @@ TUnpackingLoop::TUnpackingLoop(std::string name)
 TUnpackingLoop::~TUnpackingLoop() { }
 
 bool TUnpackingLoop::Iteration(){
+//  auto start = high_resolution_clock::now();
+
   std::vector<TRawEvent> event;
   int error = input_queue->Pop(event);
   if(error < 0){
@@ -76,6 +81,11 @@ bool TUnpackingLoop::Iteration(){
     }
   }
 
+//  auto stop = high_resolution_clock::now();
+//  auto duration = duration_cast<nanoseconds>(stop - start);
+//  std::cout << event.size() << " Time taken in Build " << duration.count() << " microseconds" << std::endl;
+//  auto start = high_resolution_clock::now();
+
   fOutputEvent->Build();
   fOutputEvent->SetRunStart(fRunStart);
 
@@ -83,6 +93,10 @@ bool TUnpackingLoop::Iteration(){
     output_queue->Push(fOutputEvent);
     fOutputEvent = NULL;
   }
+//  auto stop2 = high_resolution_clock::now();
+//  auto duration2 = duration_cast<nanoseconds>(stop2 - start);
+//  std::cout << "Time taken in Detector " << duration2.count() << " microseconds" << std::endl;
+
   return true;
 }
 
@@ -103,6 +117,8 @@ void TUnpackingLoop::ClearQueue() {
 }
 
 void TUnpackingLoop::HandleNSCLData(TNSCLEvent& event) {
+//  auto start = high_resolution_clock::now();
+
   //printf("in handle nscl\t%i\n",event.GetEventType()); fflush(stdout);
   switch(event.GetEventType()) {
     case kNSCLEventType::BEGIN_RUN:            // 0x0001
@@ -127,17 +143,24 @@ void TUnpackingLoop::HandleNSCLData(TNSCLEvent& event) {
       //HandleNSCLPeriodicScalers(event);
       break;
     case kNSCLEventType::PHYSICS_EVENT:        // 0x001E
-      if(event.IsBuiltData()){
+      HandleBuiltNSCLData(event);
+
+/*      if(event.IsBuiltData()){
         HandleBuiltNSCLData(event);
       } else {
         HandleUnbuiltNSCLData(event);
       }
+*/
       break;
   }
+//  auto stop = high_resolution_clock::now();
+//  auto duration = duration_cast<nanoseconds>(stop - start);
+//  std::cout << "Time taken in NSCL " << duration.count() << " microseconds" << std::endl;
 }
 
 
 void TUnpackingLoop::HandleBuiltNSCLData(TNSCLEvent& event){
+//  auto start = high_resolution_clock::now();
   TNSCLBuiltRingItem built(event);
 
   //printf("i am being called!!!\n"); fflush(stdout);
@@ -145,17 +168,29 @@ void TUnpackingLoop::HandleBuiltNSCLData(TNSCLEvent& event){
   for(unsigned int i=0; i<built.NumFragments(); i++){
     //printf("\tcounter = %i\n",counter++); fflush(stdout);
     TNSCLFragment& fragment = built.GetFragment(i);
+
     int source_id = fragment.GetFragmentSourceID();
+//  auto start = high_resolution_clock::now();
     kDetectorSystems detector = TDetectorEnv::Get().DetermineSystem(source_id);
+//  auto stop = high_resolution_clock::now();
+//  auto duration = duration_cast<nanoseconds>(stop - start);
+//  std::cout << built.NumFragments() << " Time in Built " << duration.count() << " nanoseconds" << std::endl;
+
+
     TRawEvent frag_event = fragment.GetNSCLEvent();
     // S800 events in CAESAR/S800 event have no body header.
     // This grabs the timestamp from the fragment header so it can be used later.
-    if(frag_event.GetTimestamp() == -1){
+/*    if(frag_event.GetTimestamp() == -1){
       frag_event.SetFragmentTimestamp(fragment.GetFragmentTimestamp());
     }
+*/
+//    fOutputEvent->AddRawData(frag_event, kDetectorSystems::SEGA);
     fOutputEvent->AddRawData(frag_event, detector);
   }
-//  printf("i am also here\n");
+//  auto stop = high_resolution_clock::now();
+//  auto duration = duration_cast<nanoseconds>(stop - start);
+//  std::cout << built.NumFragments() << " Time in Built " << duration.count() << " nanoseconds" << std::endl;
+
 }
 
 void TUnpackingLoop::HandleUnbuiltNSCLData(TNSCLEvent& event){
@@ -216,10 +251,12 @@ void TUnpackingLoop::HandleGEBData(TGEBEvent& event){
       break;
     case 17: // Phoswich Wall Mode2 equivlant.
       break;
+    case 19: // GODDESS
+      break;
     case 21: // Lenda event format identical to Type25
       fOutputEvent->AddRawData(event, kDetectorSystems::LENDA);
       break;
-    case 22: // FastScint - S.G. Unsure of this data, type22 should be GODDESS from GEBHeaders.h
+    case 22: // FastScint - S.G. Unsure of this data, type22 should be GODDESS auxillary from GEBHeaders.h
       fOutputEvent->AddRawData(event, kDetectorSystems::FASTSCINT);
       break;
     case 25: // General NSCL DDAS format identical to Type21

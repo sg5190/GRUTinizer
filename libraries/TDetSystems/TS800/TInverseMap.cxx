@@ -39,7 +39,7 @@ bool TInverseMap::ReadMapFile(const char *filename) {
   if(mapfile.length()==0)
     mapfile = TGRUTOptions::Get()->S800InverseMapFile();
   if(mapfile.length()==0 || access(mapfile.c_str(),F_OK)==-1) {
-    printf("no inverse map loaded and file \"%s\" not found.\n",mapfile.c_str());
+    std::cout << "\033[1;31mNo inverse map loaded or file " << mapfile << " does not exist\033[0m" << std::endl;
     return false;
   }
   //static std::mutex inv_map_mutex;

@@ -17,9 +17,9 @@ class TFastScintHit : public TDetectorHit {
     TVector3 &GetPosition() const;
 
     void SetTime(unsigned short time) { fTimes.push_back(time); }
-    virtual int  Time() const { 
+    virtual int  GetTime0() const {
       if(fTimes.size()) {
-	return fTimes[0]; 
+	return fTimes[0];
       } else {
 	return -1;
       }
@@ -27,9 +27,9 @@ class TFastScintHit : public TDetectorHit {
 
     const std::vector<unsigned short>& GetAllTimes() const { return fTimes; }
     size_t GetNumTimes() const { return fTimes.size(); }
-    int GetMTime(size_t j) const { 
+    int GetMTime(size_t j) const {
       //if(GetNumTimes()<j) {
-	return fTimes[j]; 
+	return fTimes[j];
       //} else {
 	//return -1;
       //}

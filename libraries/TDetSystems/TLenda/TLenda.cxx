@@ -53,9 +53,8 @@ int TLenda::BuildHits(std::vector<TRawEvent>& raw_data) {
       hit.SetAddress(address);
       hit.SetDetectorNumber(chan->GetArrayPosition());
       hit.SetCharge(ddas.GetEnergy());
-      hit.SetTime(ddas.GetCFDTime());
       hit.SetTimestamp(ddas.GetTimestamp());
-      hit.SetTimeFull(ddas.GetTime()); // Timestamp + CFD
+      hit.SetTime(ddas.GetTime()); // Timestamp + CFD
       hit.SetCFDTime(ddas.GetCFDTime()); // CFD ONLY
       hit.SetTrace(ddas.GetTraceLength(), ddas.trace);
       if(*chan->GetArraySubposition() == 'T'){

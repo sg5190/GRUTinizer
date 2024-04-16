@@ -151,7 +151,6 @@ public:
 
 
 public:
-  int BuildHits(UShort_t size,UShort_t *dptr,Long64_t timestamp); 
 
 private:
   virtual int  BuildHits(std::vector<TRawEvent>& raw_data);
@@ -188,10 +187,9 @@ private:
 class TS800Track {
   public:
     TS800Track();
-//    TS800Track(const TS800*);
     virtual ~TS800Track();
     void Clear();
-    //Uses the CRDC X and Y postion to calculate all Focal plane and target angles
+    //Uses the CRDC X and Y postion and inverse map to calculate all Focal plane and target angles
     void CalculateTracking(const TS800 *, int i = 6);
   public:
     float xfp[2];   // Focal plane dispersive direction position, in m
