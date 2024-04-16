@@ -20,8 +20,8 @@ public:
   Int_t  B()     const { return fBCharge; }
   Int_t  C()     const { return fCCharge; }
   Int_t  Pixel() const { return fPixel; }
-  Int_t  Time()  const { return fTime; }
-  
+//  Int_t  Time()  const { return fTime; }
+
   virtual Int_t Charge() const { return B(); }
 
   Int_t IsInside(Option_t *opt="") const;

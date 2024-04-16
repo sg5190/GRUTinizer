@@ -223,7 +223,7 @@ class TIonChamber : public TDetectorHit {
 
 
     float GetCalData(int i) const {
-      TChannel *c = TChannel::GetChannel(Address(GetChannel(i)));
+      TChannel *c = TChannel::GetChannel(Address(i));
       if(c){
         return c->CalEnergy(GetData(i));
       }else{

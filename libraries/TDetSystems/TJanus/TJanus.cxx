@@ -6,20 +6,16 @@
 
 #include "TMath.h"
 #include "TRandom.h"
-
-#include "JanusDataFormat.h"
-#include "TNSCLEvent.h"
-#include "TNucleus.h"
-#include "TReaction.h"
-#include "TSRIM.h"
+#include "DDASDataFormat.h"
+#include "TRawEvent.h"
 
 int TJanus::NRing = 24;
-int TJanus::NSector = 24;
+int TJanus::NSector = 32;
 
-double TJanus::PhiOffset = 2*TMath::Pi()*0.25;
-double TJanus::OuterDiameter  = 70.;
-double TJanus::InnerDiameter  = 22.;
-double TJanus::TargetDistance = 31.;
+double TJanus::PhiOffset = 1.5*TMath::Pi();
+double TJanus::OuterDiameter  = 7.0;
+double TJanus::InnerDiameter  = 2.2;
+double TJanus::TargetDistance = 3.1;
 
 double TJanus::TDiff = 1000;
 double TJanus::EWin = 0.9;
@@ -48,155 +44,49 @@ void TJanus::Clear(Option_t* opt){
   janus_hits.clear();
   ring_hits.clear();
   sector_hits.clear();
-  stack_triggered = -1;
-  num_packets = -1;
-  total_bytes = -1;
 }
 
 int TJanus::BuildHits(std::vector<TRawEvent>& raw_data){
-  //assert(raw_data.size() == 1);
-
+  long int smallest_timestamp = 0x7fffffffffffffff;
   for(auto& event : raw_data){
-    TNSCLEvent& nscl = (TNSCLEvent&)event;
-    SetTimestamp(nscl.GetTimestamp());
-    Build_VMUSB_Read(nscl.GetPayloadBuffer());
+    //Unpack raw data into a DDAS Event
+    TSmartBuffer buf = event.GetPayloadBuffer();
+    TDDASEvent<DDASHeader> ddas(buf);
+    unsigned int address = ( (5<<24) + (ddas.GetCrateID()<<16) + (ddas.GetSlotID()<<8) + ddas.GetChannelID() );
+    //If channel not found in channels.cal file skip and do nothing
+    TChannel* chan = TChannel::GetChannel(address);
+    static int lines_displayed = 0;
+    if(!chan){
+      if(lines_displayed < 10 && ddas.GetCrateID()) {
+        std::cout << "Unknown Janus (crate, slot, channel): (" << ddas.GetCrateID() << ", " << ddas.GetSlotID() << ", " <<  ddas.GetChannelID() << endl;
+      }
+      lines_displayed++;
+      continue;
+    }
+    TJanusHit hit;
+    hit.SetAddress(address);
+    hit.SetTimestamp(ddas.GetTimestamp()); // Timestamp in ns
+    if(hit.Timestamp()<smallest_timestamp) { smallest_timestamp = hit.Timestamp(); }
+    hit.SetTime(ddas.GetTime()); // Timestamp + CFD
+    hit.SetCFDTime(ddas.GetCFDTime()); // CFD ONLY
+    hit.SetCharge(ddas.GetEnergy());
+    if(*chan->GetArraySubposition() == 'F'){
+      hit.SetRingNumber(chan->GetSegment());
+      hit.SetSectorNumber(-1);
+      ring_hits.push_back(std::move(hit));
+    } else {
+      hit.SetRingNumber(-1);
+      hit.SetSectorNumber(chan->GetSegment());
+      sector_hits.push_back(std::move(hit));
+    }
   }
-  return janus_hits.size() + janus_channels.size();
+  return ring_hits.size() + sector_hits.size();
 }
 
 TDetectorHit& TJanus::GetHit(int i){
   return janus_hits.at(i);
 }
 
-
-void TJanus::Build_VMUSB_Read(TSmartBuffer buf){
-  total_bytes = buf.GetSize();
-  // Events with all ADCs have 1166 bytes without zero-suppression, about 850 with zero-suppression
-  // Events with missing ADCs have 690 bytes (first event of run), 418 bytes (other events),
-  //    or ~200 bytes (zero suppression).
-  // Very large events are caused when the VM-USB reads incorrectly.
-  //   These are very rare, but Jeromy doesn't know what causes it.
-  if(total_bytes < 750 ||
-     total_bytes > 1300) {
-    return;
-  }
-
-  const char* data = buf.GetData();
-
-  const VMUSB_Header* vmusb_header = (VMUSB_Header*)data;
-  data += sizeof(VMUSB_Header);
-
-
-  // This value should ALWAYS be zero, because that corresponds to the i1 trigger of the VMUSB.
-  // If it is not, it is a malformed event.
-  stack_triggered = vmusb_header->stack();
-
-  // vmusb_header.size() returns the number of 16-bit words in the payload.
-  // Each adc entry is a 32-bit word.
-  // 6 additional 16-bit words for the timestamp (2 48-bit numbers)
-  num_packets = vmusb_header->size()/2 - 3;
-
-  const VME_Timestamp* vme_timestamp = (VME_Timestamp*)(data + num_packets*sizeof(CAEN_DataPacket));
-  long timestamp = vme_timestamp->ts1() * 20;
-
-  std::map<unsigned int,TJanusHit> front_hits;
-  std::map<unsigned int,TJanusHit> back_hits;
-  //std::cout << "NP = " << num_packets << std::endl;
-  for(int i=0; i<num_packets; i++){
-
-    const CAEN_DataPacket* packet = (CAEN_DataPacket*)data;
-    data += sizeof(CAEN_DataPacket);
-
-    if(!packet->IsValid()){
-      continue;
-    }
-
-    // ADCs are in slots 5-8, TDCs in slots 9-12
-    bool is_tdc = packet->card_num() >= 9;
-    unsigned int adc_cardnum = packet->card_num();
-    if(is_tdc){
-      adc_cardnum -= 4;
-    }
-    unsigned int address =
-      (2<<24) + //system id
-      (4<<16) + //crate id
-      (adc_cardnum<<8) +
-      packet->channel_num();
-
-    TChannel* chan = TChannel::GetChannel(address);
-    // Bad stuff, tell somebody to fix it
-    static int lines_displayed = 0;
-    if(!chan){
-      if(lines_displayed < 1000) {
-        std::cout << "Unknown analog (slot, channel): (" << adc_cardnum << ", " << packet->channel_num() << "), address = 0x" << std::hex << address << std::dec << std::endl;
-      } else if(lines_displayed==1000){
-        std::cout << "I'm going to stop telling you that the channel was unknown you should probably stop the program." << std::endl;
-      }
-      lines_displayed++;
-      continue;
-    }
-
-    if(strcmp(chan->GetSystem(),"DEL") == 0) {
-//      std::cout << "Not A Janus channel" << std::endl;
-      continue;
-    }
-//    std::cout << i << "\t" << chan->GetSystem() << "\t" << chan->GetSegment() << "\t" << is_tdc << "\t" << packet->adcvalue() << "\t0x" << std::hex << address << std::dec << std::endl;
-    TJanusHit hit;
-    //Match a TDC hit to ADC Hit do so for rings/sectors
-    if(is_tdc) {
-      if(*chan->GetArraySubposition() == 'F'){
-        for(unsigned int r = 0; r < ring_hits.size(); r++) {
-	  if(ring_hits.at(r).GetRing() == chan->GetSegment()) {
-	    ring_hits.at(r).SetTDCOverflowBit(packet->overflow());
-	    ring_hits.at(r).SetTDCUnderflowBit(packet->underflow());
-            ring_hits.at(r).SetTime(packet->adcvalue());
-	    break;
-	  }
-	}
-      } else {
-        for(unsigned int s = 0; s < sector_hits.size(); s++) {
-          if(sector_hits.at(s).GetSector() == chan->GetSegment()) {
-	    sector_hits.at(s).SetTDCOverflowBit(packet->overflow());
-            sector_hits.at(s).SetTDCUnderflowBit(packet->underflow());
-            sector_hits.at(s).SetTime(packet->adcvalue());
-            break;
-          }
-        }
-      }
-    } else {
-//      if(packet->adcvalue() < 100) continue;
-      hit.SetADCOverflowBit(packet->overflow());
-      hit.SetADCUnderflowBit(packet->underflow());
-      hit.SetCharge(packet->adcvalue());
-      hit.SetAddress(address);
-      hit.SetTimestamp(timestamp);
-      hit.SetDetectorNumber(chan->GetArrayPosition());
-      if(*chan->GetArraySubposition() == 'F'){
-	hit.SetRingNumber(chan->GetSegment());
-	hit.SetSectorNumber(-1);
-	ring_hits.push_back(std::move(hit));
-      } else {
-        hit.SetRingNumber(-1);
-        hit.SetSectorNumber(chan->GetSegment());
-        sector_hits.push_back(std::move(hit));
-      }
-    }
-  }
-  data += sizeof(VME_Timestamp);
-
-  //assert(data == buf.GetData() + buf.GetSize());
-  if(data != buf.GetData() + buf.GetSize()){
-    std::cerr << "End of janus read not equal to size of buffer given:\n"
-              << "\tBuffer Start: " << (void*)buf.GetData() << "\tBuffer Size: " << buf.GetSize()
-              << "\n\tBuffer End: " << (void*)(buf.GetData() + buf.GetSize())
-              << "\n\tNum ADC chan: " << num_packets
-              << "\n\tPtr at end of read: " << (void*)(data)
-              << "\n\tDiff: " << (buf.GetData() + buf.GetSize()) - data
-              << std::endl;
-
-    buf.Print("all");
-  }
-}
 
 TVector3 TJanus::GetPosition(int detnum, int ring_num, int sector_num){
   if(detnum<0 || detnum>1 ||
@@ -282,7 +172,6 @@ void TJanus::BuildJanusHit() {
     }
   }
   if(multhit) {
-    std::cout << "Do something" << std::endl;
     int ringCount = 0;
     int secCount = 0;
     //Check for hits without segments, charge may be shared between multiple strips

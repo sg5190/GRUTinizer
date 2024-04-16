@@ -75,9 +75,6 @@ void TDetectorHit::AddEnergy(double eng) {
   SetEnergy(eng + GetEnergy());
 }
 
-
-
-
 double TDetectorHit::GetTime() const {
   TChannel* chan = TChannel::GetChannel(fAddress);
   if(!chan){
@@ -85,7 +82,6 @@ double TDetectorHit::GetTime() const {
   }
   return chan->CalTime(Time(), fTimestamp);
 }
-
 
 Int_t TDetectorHit::Compare(const TObject *obj) const {
   const TDetectorHit* other = (const TDetectorHit*)obj;
@@ -107,12 +103,10 @@ const char* TDetectorHit::GetName() const {
   }
 }
 
-
 void TDetectorHit::Streamer(TBuffer &r_b) {
   if(r_b.IsReading()) {
     r_b.ReadClassBuffer(TDetectorHit::Class(),this);
-  } else { 
-    //std::cout << "streamer\tout!" << std::endl;
+  } else {
     r_b.WriteClassBuffer(TDetectorHit::Class(),this);
   }
 }
@@ -125,7 +119,7 @@ int   TDetectorHit::GetNumber() const {
     return -1;
   }
 }
-    
+
 const char* TDetectorHit::GetInfo()   const {
   TChannel* chan = TChannel::GetChannel(fAddress);
   if(chan){
@@ -143,7 +137,3 @@ const char* TDetectorHit::GetSystem() const {
     return "";
   }
 }
-
-
-
-

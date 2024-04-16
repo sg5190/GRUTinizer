@@ -7,7 +7,7 @@ using namespace std::chrono;
 /*******************************************************************************/
 /* TTrigger ********************************************************************/
 /* Stores data from ULM trigger module *****************************************/
-/* Used primarily for PID purposes *********************************************/
+/* Used To identift trigger source  purposes ***********************************/
 /*******************************************************************************/
 TTrigger::TTrigger() {
   Clear();
@@ -450,7 +450,6 @@ float TCrdc::GetNonDispersiveY() {
 
   if(std::isnan(y_slope)) y_slope = 1.0;
   if(std::isnan(y_offset)) y_offset = 0.0;
-
   float tmp = ((float)time) * y_slope + y_offset;
   return tmp;
 }
@@ -543,7 +542,7 @@ float TCrdc::GetNonDispersiveY(int maxpad) {
 }
 
 /*******************************************************************************/
-/* Blank Print Function ********************************************************/
+/* Basic Print Function ********************************************************/
 /*******************************************************************************/
 void TCrdc::Print(Option_t *opt) const {
 

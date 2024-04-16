@@ -7,6 +7,9 @@
 #include "TGretina.h"
 #include "TGEBEvent.h"
 
+#include "chrono"
+using namespace std::chrono;
+
 /*******************************************************************************/
 /* TGretina ********************************************************************/
 /* Main Class for Gretina mode2 (Decomposed) analysis **************************/
@@ -338,6 +341,7 @@ void TGretina::InsertHit(const TDetectorHit& hit){
 /* Unpacks GEB data and builds TGretinaHit *************************************/
 /*******************************************************************************/
 int TGretina::BuildHits(std::vector<TRawEvent>& raw_data){
+//  auto start = high_resolution_clock::now();
   if(raw_data.size()<1)
     return Size();
   long smallest_time = 0x3fffffffffffffff;
@@ -351,6 +355,9 @@ int TGretina::BuildHits(std::vector<TRawEvent>& raw_data){
     InsertHit(hit);
   }
   SetTimestamp(smallest_time);
+//  auto stop = high_resolution_clock::now();
+//  auto duration = duration_cast<nanoseconds>(stop - start);
+//  std::cout << "Time taken in TSeGA " << duration.count() << " microseconds" << std::endl;
   return Size();
 }
 

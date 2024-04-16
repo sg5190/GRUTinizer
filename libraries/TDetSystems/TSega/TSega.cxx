@@ -10,9 +10,9 @@
 #include "TRawEvent.h" // added Mark
 
 std::map<int,TSega::Transformation> TSega::detector_positions;
-std::map<std::array<int,2>,int> TSega::seg_map;
-std::map<std::array<int,2>,int> TSega::pair_map;
-std::map<std::array<int,2>,int> TSega::slice_map;
+
+#include "chrono"
+using namespace std::chrono;
 
 TSega::TSega(){ }
 
@@ -50,6 +50,7 @@ TDetectorHit& TSega::GetHit(int i){
 /* Unpacks raw DDAS data and builds TSega events *******************************/
 /*******************************************************************************/
 int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
+//  auto start = high_resolution_clock::now();
 
   long int smallest_timestamp = 0x7fffffffffffffff;
   for(auto& event : raw_data){
@@ -99,14 +100,17 @@ int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
     if(segnum==0){
       hit->SetAddress(address);
       hit->SetTimestamp(ddas.GetTimestamp()); // Timestamp in ns
-      hit->SetTimeFull(ddas.GetTime()); // Timestamp + CFD
+      hit->SetTime(ddas.GetTime()); // Timestamp + CFD
       hit->SetCFDTime(ddas.GetCFDTime()); // CFD ONLY
+      hit->SetCFDFail(ddas.GetCFDFailBit());
       if(hit->Timestamp()<smallest_timestamp) { smallest_timestamp = hit->Timestamp(); }
       hit->SetCharge(ddas.GetEnergy());
       hit->SetTrace(ddas.GetTraceLength(), ddas.trace);
       //For checking Trapezoidal filter output in DDAS, unlikely to be useful for mosr people
       if(ddas.HasEnergySum()) {
-        for(int i = 0; i < 4; i++) hit->SetEnergySum(i, ddas.GetEnergySum(0));
+        for(int i = 0; i < 4; i++){
+          hit->SetEnergySum(i, ddas.GetEnergySum(i));
+	}
       }
       hit->SetEnergySumBool(ddas.HasEnergySum());
     } else {  //Segment hit, add to SegmentHit vector
@@ -114,13 +118,17 @@ int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
       if(!hit->HasCore()) hit->SetTimestamp(ddas.GetTimestamp()); //If no core present use segment for Timestamp
       seg.SetCharge(ddas.GetEnergy());
       seg.SetTimestamp(ddas.GetTimestamp());  // Timestamp in ns
-      seg.SetTimeFull(ddas.GetTime()); // Timestamp + CFD
+      seg.SetTime(ddas.GetTime()); // Timestamp + CFD
       seg.SetCFDTime(ddas.GetCFDTime()); // CFD ONLY
       seg.SetTrace(ddas.GetTraceLength(), ddas.trace);
     }
   }
   //set the TSeGA  time....
   SetTimestamp(smallest_timestamp);  //fix me pcb
+
+//  auto stop = high_resolution_clock::now();
+//  auto duration = duration_cast<nanoseconds>(stop - start);
+//  std::cout << "Time taken in TSeGA " << duration.count() << " microseconds" << std::endl;
   return Size();
 }
 

@@ -35,6 +35,10 @@ public:
 
   std::vector<unsigned short>* GetTrace(int segnum=0);
 
+  void SetCFDFail(int cfdbit) { fCfdFail = 0; }
+  int GetCFDFail() const { return fCfdFail; }
+
+//  void SetTime(double time)            { fTime = time; }
   void SetTrace(unsigned int trace_length, const unsigned short* trace);
 
   void SetEnergySumBool(bool sum = false) {fEsum = sum; }
@@ -42,6 +46,8 @@ public:
 
   void SetEnergySum(int sum, int energy_sum) { fEnSum[sum] = energy_sum; }
   int GetEnergySum(int sum) const { return fEnSum[sum]; }
+
+
   TSegaSegmentHit& MakeSegmentByAddress(unsigned int address);
 
   int GetSlot() const;
@@ -64,7 +70,7 @@ private:
   std::vector<TSegaSegmentHit> fSegments;
   int fEnSum[4];
   bool fEsum;
-
+  int fCfdFail;
   ClassDef(TSegaHit,4);
 };
 

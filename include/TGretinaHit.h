@@ -18,12 +18,12 @@ class TS800;
 
 class TInteractionPoint {
   public:
-    TInteractionPoint() { } 
+    TInteractionPoint() { }
     TInteractionPoint(const TInteractionPoint &IP);
     TInteractionPoint(int seg,float eng,float frac,TVector3 lpos) :
                       fSegNum(seg),fEng(eng),fDecompEng(frac),fLPosition(lpos) { }
     virtual ~TInteractionPoint() { }
-   
+
     virtual void Copy(const TInteractionPoint&);
     void Add(TInteractionPoint&);
 
@@ -31,8 +31,8 @@ class TInteractionPoint {
     virtual float GetPreampE()             const { return fEng;       }
     virtual float GetDecompE()             const { return fDecompEng; }
     virtual float GetAssignE()             const { return fAssignedEng; }
-    virtual int   GetOrder()               const { return fOrder; } 
-    virtual TVector3 GetPosition(int xtal) const; 
+    virtual int   GetOrder()               const { return fOrder; }
+    virtual TVector3 GetPosition(int xtal) const;
     TVector3 GetLocalPosition()            const { return fLPosition; }
     void SetOrder(int o)     { fOrder=o; }
     void SetAssignE(float e) { fAssignedEng = e; }
@@ -201,7 +201,6 @@ public:
   void SetSmear(bool smear)	    const { fSmear = smear; }
   TVector3 GetCrystalPosition()           const;
 
-  void Add(const TGretinaHit& other);
   void NNAdd(const TGretinaHit& other);
   void SetCoreEnergy(float temp) const { fCoreEnergy = temp; }
   void SetABDepth(int ab) const { fAB = ab; }

@@ -18,7 +18,6 @@
 #include "TReaction.h"
 #include "TSRIM.h"
 
-
 TJanusDDAS::TJanusDDAS() {
   Clear();
 }
@@ -91,7 +90,7 @@ void TJanusDDAS::ClearCorrelatedHits()  {
 int TJanusDDAS::BuildHits(std::vector<TRawEvent>& raw_data){
   UnpackChannels(raw_data);
   BuildCorrelatedHits();
-  
+
   /*
      printf("**************************\n");
      printf("**************************\n");

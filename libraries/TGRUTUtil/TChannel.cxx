@@ -14,11 +14,7 @@
 #include "GRootFunctions.h"
 #include "TGRUTUtilities.h"
 
-#include "chrono"
-using namespace std::chrono;
-
 std::unordered_map<unsigned int,TChannel*> TChannel::fChannelMap;
-//std::map<unsigned int,TChannel*> TChannel::fChannelMap;
 TChannel *TChannel::fDefaultChannel = new TChannel("TChannel",0xffffffff);
 std::string TChannel::fChannelData;
 std::vector<double> TChannel::empty_vec;
@@ -141,9 +137,6 @@ void TChannel::Clear(Option_t *opt) {
   pedestal = 0;
 }
 
-//void TChannel::Compare(const TObject &rhs) const { }
-
-
 bool TChannel::AlphaSort(const TChannel &chana,const TChannel &chanb) {
    //Compares the names of the two TChannels. Returns true if the names are the
    //same, false if different.
@@ -156,26 +149,18 @@ bool TChannel::AlphaSort(const TChannel &chana,const TChannel &chanb) {
    }
 }
 
-
 TChannel* TChannel::GetChannel(unsigned int add)   {
-//  auto start = high_resolution_clock::now();
   TChannel *chan = 0;
-  if(add==0xffffffff)
-    return fDefaultChannel;
+  if(add==0xffffffff) return fDefaultChannel;
   if(fChannelMap.count(add)==1) {
     chan = fChannelMap.at(add);
   }
-//  auto stop = high_resolution_clock::now();
-//  auto duration = duration_cast<nanoseconds>(stop - start);
-//  std::cout << "Time taken by Fast function: " << duration.count() << " microseconds" << std::endl;
   return chan;
 }
 
 TChannel* TChannel::Get(unsigned int add)   {
   return GetChannel(add);
 }
-
-
 
 TChannel* TChannel::FindChannel(std::string name)   {
   TChannel *chan = 0;
@@ -303,7 +288,6 @@ double TChannel::CalEfficiency(double energy) const {
   return Efficiency(energy,GetEfficiencyCoeff());
 }
 
-
 const std::vector<double>& TChannel::GetTimeCoeff(double timestamp) const {
   for(auto& tc : time_coeff) {
     if(timestamp >= tc.start_time) {
@@ -326,7 +310,6 @@ void TChannel::SetTimeCoeff(std::vector<double> coeff, double timestamp) {
       found = &tc.coefficients;
     }
   }
-
   if(found){
     *found = std::move(coeff);
   } else {
@@ -334,7 +317,6 @@ void TChannel::SetTimeCoeff(std::vector<double> coeff, double timestamp) {
     std::sort(time_coeff.begin(), time_coeff.end());
   }
 }
-
 
 double TChannel::CalTime(int time, double timestamp) const {
   return Calibrate(time, GetTimeCoeff(timestamp));
@@ -379,11 +361,6 @@ double TChannel::Efficiency(double energy,const std::vector<double>& coeff) {
   return GRootFunctions::GammaEff(&energy,const_cast<double*>(&coeff[0]));
 }
 
-
-
-
-
-
 int TChannel::ReadCalFile(const char* filename,Option_t *opt) {
   std::string infilename = filename;
   if(infilename.length()==0)
@@ -410,8 +387,7 @@ int TChannel::ReadCalFile(const char* filename,Option_t *opt) {
 
   int channels_found = ParseInputData(sbuffer,opt);
   if(channels_found) {
-    //fFileNames.push_back(std::string(filename);;
-    fChannelData = sbuffer; //.push_back(std::string((const char*)buffer);
+    fChannelData = sbuffer;
   }
   return channels_found;
 }
@@ -424,11 +400,6 @@ int TChannel::WriteCalFile(std::string outfilename,Option_t *opt) {
   }
   std::sort(chanvec.begin(),chanvec.end(),TChannel::AlphaSort);
 
-  //std::string output;
-  //for(auto iter : chanvec) {
-  //  output.append(iter->PrintToString());
-  //  output.append("\n");
-  //}
   int count =0;
   if(outfilename.length()>0) {
     std::ofstream calout;

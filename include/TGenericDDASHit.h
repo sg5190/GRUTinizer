@@ -15,6 +15,7 @@ public:
 
   std::vector<unsigned short>* GetTrace()     { return &fTrace; }
 
+  void SetTime(double time)            { fTime = time; }
   void SetTrace(unsigned int trace_length, const unsigned short* trace);
   void SetDetectorNumber(int dnum) { fDetector = dnum; }
   void SetExtTime(long timestamp)  { fExtTime = timestamp; }

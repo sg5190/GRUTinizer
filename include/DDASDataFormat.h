@@ -35,7 +35,6 @@ public:
     : energy_sum(NULL), qdc_sum(NULL), extclock(NULL), trace(NULL),
       header(NULL), buf(buf) {
     header = (HeaderType*)buf.GetData();
-//    std::cout << sizeof(HeaderType) << "\t" << std::hex << header->size << "\t" << header->frequency << "\t" << header->status << "\t" << GetChannelHeaderLength() << std::dec << std::endl;
     buf.Advance(sizeof(HeaderType));
 
     if(HasEnergySum()){
@@ -62,14 +61,14 @@ public:
   DDAS_Ext_Clock* extclock;
   unsigned short* trace;
 
-  bool HasEnergySum() const {
+  bool HasQDCSum() const {
     return (GetChannelHeaderLength() == 12 ||
             GetChannelHeaderLength() == 14 ||
             GetChannelHeaderLength() == 16 ||
             GetChannelHeaderLength() == 18);
   }
 
-  bool HasQDCSum() const {
+  bool HasEnergySum() const {
     return (GetChannelHeaderLength() == 8 ||
             GetChannelHeaderLength() == 10 ||
             GetChannelHeaderLength() == 16 ||

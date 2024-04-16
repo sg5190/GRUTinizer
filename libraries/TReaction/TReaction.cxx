@@ -208,7 +208,7 @@ double TReaction::AnalysisBeta(double ekin, int part){
 }
 
 double TReaction::AnalysisBetaFromThetaLab(double theta, int part) {
-  double ekin = GetTLabFromThetaCm(theta, part);
+  double ekin = GetTLabFromThetaCm(ConvertThetaLabToCm(theta,part), part);
   return AnalysisBeta(ekin, part);
 }
 
