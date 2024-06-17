@@ -135,13 +135,13 @@ public:
 
   double GetCFDTime()     const {
     if(header->frequency == 100) {
-      return (((header->time_high_cfd & BIT30TO16MASK) >> 16) / 32768 ) * 10.0;
+      return (((header->time_high_cfd & BIT30TO16MASK) >> 16) / 32768.0 ) * 10.0;
     } else if(header->frequency == 250) {
-      return (((header->time_high_cfd & BIT29TO16MASK) >> 16) / 16384 - GetCFDTrig() ) * 4.0;
+      return (((header->time_high_cfd & BIT29TO16MASK) >> 16) / 16384.0 - GetCFDTrig() ) * 4.0;
     } else if(header->frequency == 500) {
-      return (((header->time_high_cfd & BIT28TO16MASK) >> 16) / 8192 + GetCFDTrig() -1 ) * 2.0;
+      return (((header->time_high_cfd & BIT28TO16MASK) >> 16) / 8192.0 + GetCFDTrig() -1 ) * 2.0;
     } else {
-      return (((header->time_high_cfd & BIT30TO16MASK) >> 16) / 32768 ) * 10.0;
+      return (((header->time_high_cfd & BIT30TO16MASK) >> 16) / 32768.0 ) * 10.0;
     }
   }
 

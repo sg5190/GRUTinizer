@@ -22,6 +22,7 @@ class TLenda : public TDetector {
 
     int GetTopSize() {return top_hits.size(); }
     int GetBottomSize() {return bottom_hits.size(); }
+    int GetReferenceSize() {return ref_hits.size(); }
 
     int GetBarSize();		//Size of Bars
     void BuildLendaBars();	//Loops over Top and Bottome and creates BarHits
@@ -30,6 +31,7 @@ class TLenda : public TDetector {
     TLendaHit * GetBarHit(const int&);
     TLendaHit * GetTopHit(const int&);
     TLendaHit * GetBottomHit(const int&);
+    TLendaHit * GetReferenceHit(const int&);
 
     static TVector3 GetPosition(int i) { return TVector3(0,0,1); }
 
@@ -41,9 +43,10 @@ class TLenda : public TDetector {
 
     std::vector<TLendaHit> top_hits;    //Top Hits
     std::vector<TLendaHit> bottom_hits;    //Bottom Hits
+    std::vector<TLendaHit> ref_hits;    //Bottom Hits
 
     static int TDiff;
-  ClassDef(TLenda,1);
+  ClassDef(TLenda,2);
 };
 
 #endif

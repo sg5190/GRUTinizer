@@ -35,7 +35,7 @@ public:
 
   std::vector<unsigned short>* GetTrace(int segnum=0);
 
-  void SetCFDFail(int cfdbit) { fCfdFail = 0; }
+  void SetCFDFail(int cfdbit) { fCfdFail = cfdbit; }
   int GetCFDFail() const { return fCfdFail; }
 
 //  void SetTime(double time)            { fTime = time; }

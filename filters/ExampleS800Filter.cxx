@@ -41,6 +41,7 @@ bool FilterCondition(TRuntimeObjects& obj) {
 
   float tmpOBJE1 = s800->GetMTofCorr(tmpOBJ, afp, xfp0, GValue::Value("OBJ_MTOF_CORR_AFP"),  GValue::Value("OBJ_MTOF_CORR_XFP"));
   float tmpIC = s800->GetIonChamber().GetdE(xfp0, yfp0);
+  if(!outgoing) return true;
   if(out->GateID(tmpOBJE1,tmpIC) < 0) return false;
 
   return true;

@@ -167,6 +167,9 @@ Bool_t GDoubleGaus::Fit(TH1 *fithist,double cent1,double cent2,Option_t *opt) {
     }
   }
 
+  fChi2 = this->GetChisquare();
+  fNdf = this->GetNDF();
+
   Double_t xlow,xhigh;
   TF1::GetRange(xlow,xhigh);
 
@@ -198,8 +201,13 @@ Bool_t GDoubleGaus::Fit(TH1 *fithist,double cent1,double cent2,Option_t *opt) {
   double bgArea = fBGFit.Integral(xlow,xhigh) / fithist->GetBinWidth(1);;
   fAreaTotal -= bgArea;
 
+  TMatrixDSym CovMat = fitres->GetCovarianceMatrix();
+  fDAreaTotal = (this->IntegralError(xlow, xhigh, this->GetParameters(), CovMat.GetMatrixArray()))/fithist->GetBinWidth(1);
+
   if(xlow>xhigh) std::swap(xlow,xhigh);
   fSumTotal = fithist->Integral(fithist->GetXaxis()->FindBin(xlow), fithist->GetXaxis()->FindBin(xhigh));
+  fDSumTotal = TMath::Sqrt(fSumTotal);
+  fSumTotal -= bgArea;
 
   if(!verbose && !noprint) {
     printf("hist: %s\n",fithist->GetName());
@@ -238,8 +246,8 @@ void GDoubleGaus::Print(Option_t *opt) const {
   printf("AreaTotal:      %1f +/- %1f \n", fAreaTotal, fDAreaTotal);
   printf("SumTotal:       %1f +/- %1f \n", fSumTotal, fDSumTotal);
   printf("FWHM:      %1f +/- %1f \n",this->GetFWHM(),this->GetFWHMErr());
-  printf("Reso:      %1f%%  \n",this->GetFWHM()/this->GetParameter("centroid")*100.);
-  printf("Chi^2/NDF: %1f\n",fChi2/fNdf);
+  printf("Reso:      %1f%%  \n",this->GetFWHM()/this->GetParameter("centroid1")*100.);
+  printf("Chi^2/NDF: %1f\n",(double)fChi2/(double)fNdf);
   if(options.Contains("all")){
     TF1::Print(opt);
   }

@@ -24,18 +24,33 @@ class TLendaHit : public TDetectorHit {
 
     int Size() { return fTrace.size(); }
 
+    void SetPosArray(int arr_pos) { fArrayPosition = arr_pos; }
+    void SetPosSeg(int seg_pos) { fSegmentPosition = seg_pos; }
+
+    void SetCFDFail(int cfdbit) { fCfdFail = cfdbit; }
+    int GetCFDFail() const { return fCfdFail; }
+    void SetExtTimestamp(long timestamp) { fExtTimestamp = timestamp; }
+    long GetExtTimestamp() const      { return fExtTimestamp; }
+
     int GetSlot()    const;
     int GetCrate()   const;
     int GetChannel() const;
     int GetDetnum() const { return fDetector; }
     TVector3 GetPosition() { return TVector3(0,0,1); }
 
+    int GetPosArray() const { return fArrayPosition;   }
+    int GetPosSeg  () const { return fSegmentPosition; }
+
     Double_t numOfBadFits;
 
   private:
     std::vector<unsigned short> fTrace;
     int fDetector;
-  ClassDef(TLendaHit,1)
+    int fArrayPosition;
+    int fSegmentPosition;
+    int fCfdFail;
+    long fExtTimestamp;
+  ClassDef(TLendaHit,2)
 };
 
 #endif

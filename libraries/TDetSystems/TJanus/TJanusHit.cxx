@@ -62,9 +62,9 @@ TVector3 TJanusHit::GetPosition(bool smear, bool apply_array_offset) const {
   if(GetDetnum() == 0) secdown = true;
   TVector3 output = TJanus::GetPosition(GetRing() - 1, GetSector() - 1, GetDefaultDistance(), secdown, smear);
   if(apply_array_offset) {
-    output += TVector3(GValue::Value("Janus_X_offset"),
-                       GValue::Value("Janus_Y_offset"),
-                       GValue::Value("Janus_Z_offset"));
+    if(std::isnan(GValue::Value("Janus_X_offset")) && std::isnan(GValue::Value("Janus_Y_offset")) && std::isnan(GValue::Value("Janus_Z_offset"))) {
+      output += TVector3(GValue::Value("Janus_X_offset"), GValue::Value("Janus_Y_offset"), GValue::Value("Janus_Z_offset"));
+    }
   }
   return output;
 }
