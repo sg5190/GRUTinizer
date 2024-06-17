@@ -142,7 +142,9 @@ TVector3 TSegaHit::GetPosition(bool apply_array_offset, TVector3 array_offset) c
   TVector3 array_pos = TSega::GetSegmentPosition(GetDetnum(), GetMainSegnum());
   if(apply_array_offset){
     if(std::isnan(array_offset.X()) && std::isnan(array_offset.Y()) && std::isnan(array_offset.Z())) {
-      array_offset = TVector3(GValue::Value("Sega_X_offset"), GValue::Value("Sega_Y_offset"), GValue::Value("Sega_Z_offset"));
+      if(std::isnan(GValue::Value("Sega_X_offset")) && std::isnan(GValue::Value("Sega_Y_offset")) && std::isnan(GValue::Value("Sega_Z_offset"))) {
+        array_offset = TVector3(GValue::Value("Sega_X_offset"), GValue::Value("Sega_Y_offset"), GValue::Value("Sega_Z_offset"));
+      } else array_offset = TVector3(0,0,0);
     }
     array_pos += array_offset;
   }

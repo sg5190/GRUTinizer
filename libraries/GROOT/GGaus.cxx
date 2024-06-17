@@ -189,6 +189,9 @@ Bool_t GGaus::Fit(TH1 *fithist,Option_t *opt) {
   tmppeak->SetRange(xlow,xhigh); //This will help get the true area of the gaussian 200 ~ infinity in a gaus
   tmppeak->SetName("tmppeak");
 
+  fChi2 = this->GetChisquare();
+  fNdf = this->GetNDF();
+
   TMatrixDSym CovMat = fitres->GetCovarianceMatrix();
   fDArea = (tmppeak->IntegralError(xlow, xhigh, tmppeak->GetParameters(), CovMat.GetMatrixArray()))/fithist->GetBinWidth(1);
 
@@ -244,7 +247,7 @@ void GGaus::Print(Option_t *opt) const {
   printf("Sum:       %1f +/- %1f \n", fSum, fDSum);
   printf("FWHM:      %1f +/- %1f \n",this->GetFWHM(),this->GetFWHMErr());
   printf("Reso:      %1f%%  \n",this->GetFWHM()/this->GetParameter("centroid")*100.);
-  printf("Chi^2/NDF: %1f\n",fChi2/fNdf);
+  printf("Chi^2/NDF: %1f\n",(double)fChi2/(double)fNdf);
   if(options.Contains("all")){
     TF1::Print(opt);
   }

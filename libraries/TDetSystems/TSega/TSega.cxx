@@ -115,7 +115,11 @@ int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
       hit->SetEnergySumBool(ddas.HasEnergySum());
     } else {  //Segment hit, add to SegmentHit vector
       TSegaSegmentHit& seg = hit->MakeSegmentByAddress(address);
-      if(!hit->HasCore()) hit->SetTimestamp(ddas.GetTimestamp()); //If no core present use segment for Timestamp
+      if(!hit->HasCore()) {
+	hit->SetTimestamp(ddas.GetTimestamp()); //If no core present use segment for Timestamp
+        hit->SetTime(ddas.GetTime()); // Timestamp + CFD
+        hit->SetCFDTime(ddas.GetCFDTime()); // CFD ONLY
+      }
       seg.SetCharge(ddas.GetEnergy());
       seg.SetTimestamp(ddas.GetTimestamp());  // Timestamp in ns
       seg.SetTime(ddas.GetTime()); // Timestamp + CFD

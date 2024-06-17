@@ -17,7 +17,7 @@ double TJanus::OuterDiameter  = 7.0;
 double TJanus::InnerDiameter  = 2.2;
 double TJanus::TargetDistance = 3.1;
 
-double TJanus::TDiff = 1000;
+double TJanus::TDiff = 900;
 double TJanus::EWin = 0.9;
 double TJanus::FrontBackOffset = 0;
 

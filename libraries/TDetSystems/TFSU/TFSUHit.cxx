@@ -18,7 +18,7 @@ void TFSUHit::Print(Option_t *opt) const {
   printf("\tAddress:  0x%08x\n",Address());
   printf("Name:       %s\n",GetName());
   printf("\tCharge:   %i\n",Charge());
-  printf("\tTime:     %i\n",Time());
+  printf("\tTime:     %f\n",Time());
   GetPosition().Print();
   printf("---------------------------\n");
  }

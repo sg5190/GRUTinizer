@@ -5,8 +5,8 @@
 #define GRUT_RELEASE_TIME "2023-08-03 14:25:23 -0400"
 #define GRUT_RELEASE_NAME "v1.0"
 
-#define GRUT_GIT_COMMIT "v1.0-17-g3b9dc18"
+#define GRUT_GIT_COMMIT "v1.0-18-g1cbb9b0"
 #define GRUT_GIT_BRANCH "experimental"
-#define GRUT_GIT_COMMIT_TIME "2024-02-27 17:35:47 -0500"
+#define GRUT_GIT_COMMIT_TIME "2024-04-16 10:16:22 -0400"
 
 #endif /* GRUT_GVERSION */
