@@ -50,7 +50,7 @@ incdir=$GRUTSYS/include
 
 rpath="-Wl,-rpath=$libdir"
 grutlibs="-lTGRUTUtil -lTRawFormat -lGROOT -lTNSCLFormat -lTGEBFormat -lTGRUTUtil -lTNucleus -lTKinematics -lTReaction -lTSRIM -lTNSCLScalers"
-detlibs="-lTSega -lTDetector  -lTGretina -lTJanus -lTS800 -lTFastScint -lTCaesar -lTS800Sim -lTGretSim -lTLenda -lTGenericDDAS"
+detlibs="-lTSega -lTDetector  -lTGretina -lTJanus -lTS800 -lTFastScint -lTCaesar -lTS800Sim -lTGretSim -lTLenda -lTGenericDDAS -lTSun"
 
 grutmore="-lTGRUTint -lTLoops -lTHistogramming "
 

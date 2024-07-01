@@ -45,7 +45,3 @@ double TFSUHit::GetDoppler(double beta) const {
   double gamma = 1/(sqrt(1-pow(beta,2)));
   return GetEnergy()*gamma *(1 - beta*TMath::Cos(GetPosition().Theta()));
 }
-
-
-
-

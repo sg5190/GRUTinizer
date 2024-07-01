@@ -14,6 +14,7 @@
 #include "TS800Scaler.h"
 #include "TS800Sim.h"
 #include "TSega.h"
+#include "TSun.h"
 // Map from string to detector enum.
 // This is used to parse the DetectorEnvironment.env file.
 // This is ONLY used when parsing NSCL data files, not
@@ -21,6 +22,7 @@ std::map<std::string, kDetectorSystems> detector_system_map{
   {"Unknown",     kDetectorSystems::UNKNOWN_SYSTEM},
   {"Gretina",     kDetectorSystems::GRETINA},
   {"Mode3",       kDetectorSystems::MODE3},
+  {"FastScint",   kDetectorSystems::FASTSCINT},
   {"S800",        kDetectorSystems::S800},
   {"S800_Scaler", kDetectorSystems::S800SCALER},
   {"Bank88",      kDetectorSystems::BANK88},
@@ -28,14 +30,11 @@ std::map<std::string, kDetectorSystems> detector_system_map{
   {"S800_SIM",    kDetectorSystems::S800_SIM},
   {"Lenda",       kDetectorSystems::LENDA},
   {"DDAS",	  kDetectorSystems::DDAS},
-
   {"Sega",        kDetectorSystems::SEGA},
   {"Janus",       kDetectorSystems::JANUS},
   {"JanusDDAS",   kDetectorSystems::JANUS_DDAS},
-  {"FastScint",   kDetectorSystems::FASTSCINT},
-
+  {"Sun",	  kDetectorSystems::SUN},
   {"Caesar",      kDetectorSystems::CAESAR},
-
   {"NSCL_Scalers",kDetectorSystems::NSCLSCALERS}
 };
 
@@ -45,6 +44,7 @@ std::map<std::string, kDetectorSystems> detector_system_map{
 std::map<kDetectorSystems, TDetectorFactoryBase*> detector_factory_map {
   {kDetectorSystems::GRETINA,     new TDetectorFactory<TGretina>() },
   {kDetectorSystems::MODE3,       new TDetectorFactory<TMode3>() },
+  {kDetectorSystems::FASTSCINT,   new TDetectorFactory<TFastScint>() },
   {kDetectorSystems::S800,        new TDetectorFactory<TS800>() },
   {kDetectorSystems::S800SCALER,  new TDetectorFactory<TS800Scaler>() },
   {kDetectorSystems::BANK88,      new TDetectorFactory<TBank88>() },
@@ -52,14 +52,11 @@ std::map<kDetectorSystems, TDetectorFactoryBase*> detector_factory_map {
   {kDetectorSystems::S800_SIM,    new TDetectorFactory<TS800Sim>() },
   {kDetectorSystems::LENDA,       new TDetectorFactory<TLenda>() },
   {kDetectorSystems::DDAS,        new TDetectorFactory<TGenericDDAS>() },
-
   {kDetectorSystems::SEGA,        new TDetectorFactory<TSega>() },
   {kDetectorSystems::JANUS,       new TDetectorFactory<TJanus>() },
   {kDetectorSystems::JANUS_DDAS,  new TDetectorFactory<TJanusDDAS>() },
-  {kDetectorSystems::FASTSCINT,   new TDetectorFactory<TFastScint>() },
-
+  {kDetectorSystems::SUN,         new TDetectorFactory<TSun>() },
   {kDetectorSystems::CAESAR,      new TDetectorFactory<TCaesar>() },
-
   {kDetectorSystems::NSCLSCALERS, new TDetectorFactory<TNSCLScalers>() }
 };
 

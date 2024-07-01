@@ -35,7 +35,7 @@ void TS800Sim::Print(Option_t *opt) const { }
 
 void TS800Sim::Clear(Option_t *opt) {
   TDetector::Clear(opt);
-  s800sim_hits.clear(); 
+  s800sim_hits.clear();
 }
 
 TVector3 TS800Sim::Track(double sata,double sbta) const {
@@ -45,7 +45,6 @@ TVector3 TS800Sim::Track(double sata,double sbta) const {
   TVector3 track(ata,-bta,sqrt(1-ata*ata-bta*bta));
   return track;//.Unit();
 }
-
 
 float TS800Sim::AdjustedBeta(float beta) const {
   const TS800SimHit &s800simhit = GetS800SimHit(0);
@@ -63,16 +62,12 @@ void TS800Sim::BuildFrom(TGEBEvent &event){
   //  std::cout << *s800pack;
 
   SetTimestamp(event.GetTimestamp());
-  
-  //  std::cout << "TS800Sim::BuildFrom: DTA =" << s800pack->GetDTA() << std::endl;
 
   TS800SimHit hit;
-  hit.fATA = s800pack->GetATA(); 
-  hit.fBTA = s800pack->GetBTA(); 
-  hit.fDTA = s800pack->GetDTA(); 
-  hit.fYTA = s800pack->GetYTA(); 
+  hit.fATA = s800pack->GetATA();
+  hit.fBTA = s800pack->GetBTA();
+  hit.fDTA = s800pack->GetDTA();
+  hit.fYTA = s800pack->GetYTA();
   s800sim_hits.push_back(hit);
   //exit(1);
-
-
 }

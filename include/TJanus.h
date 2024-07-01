@@ -1,4 +1,4 @@
-#ifndef _TJANUS_H_
+ #ifndef _TJANUS_H_
 #define _TJANUS_H_
 
 #include "TDetector.h"
@@ -28,15 +28,19 @@ public:
   TJanusHit& GetRingHit(int i);
   TJanusHit& GetSectorHit(int i);
 
-  static TVector3 GetPosition(int detnum, int ring_num, int sector_num);
   static TVector3 GetPosition(int ring, int sector, double zoffset, bool sectorsdownstream, bool smear = false);
 
   Int_t GetJanusSize();
   void BuildJanusHit();
 
-  void SetMultiHit(bool set = false) { multhit = set; } //Multihits in S3
-  void SetFrontBackTime(int time) { TDiff = time; }	//Time diff between ring/sector hits
-  void SetFrontBackEnergy(double en) { EWin = en; }	//Energy ratio of ring/sector hits
+  void SetMultiHit(bool set = false) { Multihit = set; }  //Multihits in S3
+  void SetAddback(bool set = false) { Addback = set; }    //Addback of Rings/Sectors
+  void SetEnergyBuild(bool set = false) { EBuild = set; } //Build hits according to calibrated Energy or Raw Charge
+
+  void SetUpChargeThresh(double charge) { UThresh = charge; } //Charge Threshold for building TJanusHit
+  void SetDownChargeThresh(double charge) { DThresh = charge; } //Charge Threshold for building TJanusHit
+  void SetFrontBackTime(int time)     { TDiff = time; }	   //Time diff between ring/sector hits and addback
+  void SetFrontBackEnergy(double en)  { EWin = en; }	   //Energy ratio of ring/sector hits
 
 
   char StackTriggered() const { return stack_triggered; }
@@ -73,11 +77,16 @@ private:
   static double TargetDistance;
 
   //For matching ring/sectors
+  static double DThresh;
+  static double UThresh;
   static double TDiff;
   static double EWin;
-  static double FrontBackOffset;
+  //For Addback of ring/sectors
+  static bool Addback;
   //For enabling multihit events in S3
-  static bool multhit;
+  static bool Multihit;
+  //Build hits using Calibrated Energies or raw charge
+  static bool EBuild;
   ClassDef(TJanus,3);
 };
 

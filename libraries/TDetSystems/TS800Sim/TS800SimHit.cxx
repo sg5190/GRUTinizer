@@ -7,8 +7,6 @@
 
 #include "TS800Sim.h"
 
-
-
 TS800SimHit::TS800SimHit(){ Clear(); }
 
 TS800SimHit::~TS800SimHit(){ }
@@ -19,8 +17,6 @@ void TS800SimHit::Copy(TObject &rhs) const {
   ((TS800SimHit&)rhs).fBTA      = fBTA;
   ((TS800SimHit&)rhs).fDTA      = fDTA;
   ((TS800SimHit&)rhs).fYTA      = fYTA;
-
-
 }
 
 const char *TS800SimHit::GetName() const {
@@ -28,7 +24,6 @@ const char *TS800SimHit::GetName() const {
 }
 
 void TS800SimHit::Print(Option_t *opt) const {
-
   std::cout << "TS800SimHit:" <<  std::endl;
   //std::cout << "\tAddress:        \t0x" << std::hex << fAddress << std::dec << std::endl;
   std::cout << "\tATA:      \t" << GetATA() << std::endl;
@@ -45,7 +40,4 @@ void TS800SimHit::Clear(Option_t *opt) {
   fBTA=sqrt(-1);
   fDTA=sqrt(-1);
   fYTA=sqrt(-1);
-
- 
 }
-

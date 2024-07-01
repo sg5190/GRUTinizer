@@ -34,7 +34,6 @@ void TFastScint::Copy(TObject& obj) const {
 
 void TFastScint::Clear(Option_t* opt){
   TDetector::Clear(opt);
-
   //tdc_trigger = -1;
   //qdc_channels = -1;
   //tdc_channels = -1;
@@ -42,18 +41,15 @@ void TFastScint::Clear(Option_t* opt){
   fs_hits.clear();
   trig_time = -1;
   fReferenceTime = -1;
-  
 }
 
-void TFastScint::Print(Option_t *opt) const { 
+void TFastScint::Print(Option_t *opt) const {
   printf("TFastScint @  %lu \n",Timestamp());
   for(unsigned int x=0;x<Size();x++) {
     printf("\t");
     GetLaBrHit(static_cast<int>(x)).Print();
   }
 }
-
-
 
 int TFastScint::BuildHits(std::vector<TRawEvent>& raw_data){
   //static TStopwatch sw;
@@ -83,8 +79,7 @@ int TFastScint::GoodSize() const {
     if(fs_hits[i].Charge()>100)
       size++;
   }
-
-  return  size; // fs_hits.size(); //->GetEntries();
+  return size; // fs_hits.size(); //->GetEntries();
 }
 
 const TFastScintHit& TFastScint::GetLaBrHit(int i) const {
@@ -138,13 +133,11 @@ int TFastScint::Build_From(TRawEvent &event){
 
   //return 0;
 
-  
-  
   bool DEBUG = false;
   //Zero_Suppress = false;
   bool isQ = false;
   bool isT = false;
-  
+
   Int_t words_processed = 0;
   //Int_t detNumber = -1;
 
@@ -161,10 +154,9 @@ int TFastScint::Build_From(TRawEvent &event){
   // UShort_t buffer_size = *((UShort_t*)(data));
   data+=2;
 
-  for(Int_t i = 0; i <PayloadSize; i++ ){ 
+  for(Int_t i = 0; i <PayloadSize; i++ ){
     const TRawEvent::Mesy_Word* Mword = (TRawEvent::Mesy_Word*)data;
     data+=sizeof(TRawEvent::Mesy_Word); words_processed++;
-    
     if(Mword->isHeader()){ // Header
       const TRawEvent::Mesy_Header* Mhead = (TRawEvent::Mesy_Header*)Mword;
       if(Mhead->isQDC()){
@@ -173,10 +165,9 @@ int TFastScint::Build_From(TRawEvent &event){
       else if(Mhead->isTDC()){
         isQ = false; isT = true;
       }
-     // else std::cout << " *** Error -- Not QDC or TDC *** " << std::endl; 
+     // else std::cout << " *** Error -- Not QDC or TDC *** " << std::endl;
 
     } else if(Mword->isData()){ // Data
-      
       // Both qdc and tdc have channel in same spot, and I want the channel now
       unsigned int address = (12<<28) + ((TRawEvent::M_QDC_Data*)(Mword))->Chan();
       TFastScintHit *hit = FindHit(address);
@@ -185,13 +176,12 @@ int TFastScint::Build_From(TRawEvent &event){
         const TRawEvent::M_QDC_Data* Mq = (TRawEvent::M_QDC_Data*)Mword;
 	if(Mq->isOOR()) hit->SetCharge(5000);
 	else            hit->SetCharge(Mq->Charge());
-	
       } else if(isT){ // TDC
         const TRawEvent::M_TDC_Data* Mt = (TRawEvent::M_TDC_Data*)Mword;
 
 	hit->SetTime(Mt->Time());
 
-	if(Mt->isTrig()){ 
+	if(Mt->isTrig()){
 	  SetTrigTime(Mt->Time());
 	  continue;
 	}
@@ -229,12 +219,10 @@ int TFastScint::Build_From(TRawEvent &event){
   // std::cout << " Channel = " << CheckHit->GetChannel() << std::endl;
   // std::cout << " Time = " << CheckHit->GetTime() << std::endl;
   // std::cout << " Energy = " << CheckHit->GetEnergy() << std::endl;
-  
   return 0;
-  
 }
 
-TVector3 &TFastScint::GetPosition(int detector) { 
+TVector3 &TFastScint::GetPosition(int detector) {
   static std::map<int,TVector3> fFastScintDetectorMap;
   if(fFastScintDetectorMap.size()==0) {
     fFastScintDetectorMap[16] = TVector3(0,0,1);
@@ -257,7 +245,6 @@ TVector3 &TFastScint::GetPosition(int detector) {
     if(phi>2*TMath::Pi())
       phi -= 2*TMath::Pi();
     double mag = TMath::Sqrt(139.7*139.7 + 24.13*24.13);
-   
     printf("\t\tmag   = %f\n",mag);
     printf("\t\ttheta = %f\n",theta*TMath::RadToDeg());
     printf("\t\tphi   = %f\n",phi*TMath::RadToDeg());
@@ -268,5 +255,3 @@ TVector3 &TFastScint::GetPosition(int detector) {
   }
   return fFastScintDetectorMap.at(detector);
 }
-
-

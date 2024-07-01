@@ -375,4 +375,3 @@ void TPresetCanvas::Streamer(TBuffer &R__b) {
 		R__b.SetByteCount(R__c,true);
 	}
 }
-

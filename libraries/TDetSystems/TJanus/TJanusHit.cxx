@@ -6,6 +6,9 @@
 #include "TJanus.h"
 
 
+/*******************************************************************************/
+/* Copies hit ******************************************************************/
+/*******************************************************************************/
 TJanusHit::TJanusHit(const TJanusHit& hit) {
   hit.Copy(*this);
 }
@@ -17,16 +20,22 @@ TJanusHit& TJanusHit::operator=(const TJanusHit& hit) {
 
 void TJanusHit::Copy(TObject& obj) const {
   TDetectorHit::Copy(obj);
-  TJanusHit& janus = (TJanusHit&)obj;
-  janus.fRing      = fRing;
-  janus.fSector    = fSector;
+  TJanusHit& janus  = (TJanusHit&)obj;
+  janus.fRing       = fRing;
+  janus.fSector     = fSector;
+  janus.fBackCharge = fBackCharge;
 }
 
+/*******************************************************************************/
+/* Clear hit *******************************************************************/
+/*******************************************************************************/
 void TJanusHit::Clear(Option_t* opt) {
   TDetectorHit::Clear(opt);
 }
 
-
+/*******************************************************************************/
+/* Empty Print function ********************************************************/
+/*******************************************************************************/
 void TJanusHit::Print(Option_t *opt) const {
   std::cout << "Some Function" << std::endl;
 }
@@ -46,17 +55,11 @@ int TJanusHit::GetDetnum() const {
   return output;
 }
 
-
-TVector3 TJanusHit::GetPosition(bool apply_array_offset) const {
-  TVector3 output = TJanus::GetPosition(GetDetnum(), GetRing(), GetSector());
-  if(apply_array_offset) {
-    output += TVector3(GValue::Value("Janus_X_offset"),
-                       GValue::Value("Janus_Y_offset"),
-                       GValue::Value("Janus_Z_offset"));
-  }
-  return output;
-}
-
+/*******************************************************************************/
+/* Returns Hit Position based on ring/sector number ****************************/
+/* If smear is selected the position is smeared to get a uniform distribuition */
+/* apply_array_offset will use offset values defined in values file ************/
+/*******************************************************************************/
 TVector3 TJanusHit::GetPosition(bool smear, bool apply_array_offset) const {
   bool secdown = false;
   if(GetDetnum() == 0) secdown = true;
@@ -69,7 +72,32 @@ TVector3 TJanusHit::GetPosition(bool smear, bool apply_array_offset) const {
   return output;
 }
 
+/*******************************************************************************/
+/* Return Detector Z position **************************************************/
+/*******************************************************************************/
 double TJanusHit::GetDefaultDistance() const {
   if(GetDetnum() == 0) return -3.2;
   else return 2.8;
+}
+
+/*******************************************************************************/
+/* Uncalibrated Energies - ignores overflows by making them < 0 ****************/
+/*******************************************************************************/
+Int_t TJanusHit::Charge() const {
+  if(fCharge > 60000) {
+    return fCharge - 70000;
+  } else {
+    return fCharge;
+  }
+}
+
+/*******************************************************************************/
+/* Uncalibrated "Back Energy" only valid if hit has ring + sector information **/
+/*******************************************************************************/
+Double_t TJanusHit::BackCharge() const {
+  if(fBackCharge > 60000) {
+    return fBackCharge - 70000;
+  } else {
+    return fBackCharge;
+  }
 }

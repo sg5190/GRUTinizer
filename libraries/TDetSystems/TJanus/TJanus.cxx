@@ -9,26 +9,43 @@
 #include "DDASDataFormat.h"
 #include "TRawEvent.h"
 
+/*******************************************************************************/
+/* Geometric definitions used to calculate hit positions ***********************/
+/*******************************************************************************/
 int TJanus::NRing = 24;
 int TJanus::NSector = 32;
-
 double TJanus::PhiOffset = 1.5*TMath::Pi();
 double TJanus::OuterDiameter  = 7.0;
 double TJanus::InnerDiameter  = 2.2;
 double TJanus::TargetDistance = 3.1;
 
-double TJanus::TDiff = 900;
+/*******************************************************************************/
+/* Energy/Time conditions and booleans used to build a TJanusHit ***************/
+/*******************************************************************************/
+double TJanus::DThresh = 400;
+double TJanus::UThresh = 400;
+double TJanus::TDiff = 100;
 double TJanus::EWin = 0.9;
-double TJanus::FrontBackOffset = 0;
+bool TJanus::Addback = false;
+bool TJanus::Multihit = false;
+bool TJanus::EBuild = false;
 
-bool TJanus::multhit = false;
-
+/*******************************************************************************/
+/* TJanus **********************************************************************/
+/* Main class for unpacking JANUS (2 S3 Detectors) in DDAS electronics *********/
+/* NOTE: The TJanusDDAS class also unpack JANUS data and will remains for ******/
+/* legacy support. New users should use TJanus which is quicker, better ********/
+/* documented and will be the only TJanus class actively supported *************/
+/*******************************************************************************/
 TJanus::TJanus() {
   Clear();
 }
 
 TJanus::~TJanus(){ }
 
+/*******************************************************************************/
+/* Copies hit ******************************************************************/
+/*******************************************************************************/
 void TJanus::Copy(TObject& obj) const {
   TDetector::Copy(obj);
 
@@ -38,6 +55,9 @@ void TJanus::Copy(TObject& obj) const {
   janus.sector_hits = sector_hits;
 }
 
+/*******************************************************************************/
+/* Clear hit *******************************************************************/
+/*******************************************************************************/
 void TJanus::Clear(Option_t* opt){
   TDetector::Clear(opt);
 
@@ -46,14 +66,17 @@ void TJanus::Clear(Option_t* opt){
   sector_hits.clear();
 }
 
+/*******************************************************************************/
+/* Unpacks raw DDAS data into ring/sector hit vectors **************************/
+/*******************************************************************************/
 int TJanus::BuildHits(std::vector<TRawEvent>& raw_data){
   long int smallest_timestamp = 0x7fffffffffffffff;
   for(auto& event : raw_data){
-    //Unpack raw data into a DDAS Event
+    //Get raw data and unpacks it as a DDAS Event (DDASDataFormat.h)
     TSmartBuffer buf = event.GetPayloadBuffer();
     TDDASEvent<DDASHeader> ddas(buf);
     unsigned int address = ( (5<<24) + (ddas.GetCrateID()<<16) + (ddas.GetSlotID()<<8) + ddas.GetChannelID() );
-    //If channel not found in channels.cal file skip and do nothing
+    //If channel not found in calibration file (*.cal) file skip and do nothing
     TChannel* chan = TChannel::GetChannel(address);
     static int lines_displayed = 0;
     if(!chan){
@@ -63,6 +86,7 @@ int TJanus::BuildHits(std::vector<TRawEvent>& raw_data){
       lines_displayed++;
       continue;
     }
+    //Make a new TJanusHit and set values
     TJanusHit hit;
     hit.SetAddress(address);
     hit.SetTimestamp(ddas.GetTimestamp()); // Timestamp in ns
@@ -70,6 +94,7 @@ int TJanus::BuildHits(std::vector<TRawEvent>& raw_data){
     hit.SetTime(ddas.GetTime()); // Timestamp + CFD
     hit.SetCFDTime(ddas.GetCFDTime()); // CFD ONLY
     hit.SetCharge(ddas.GetEnergy());
+    //Check if the hit is a front hit (ring) or back hit (sector)
     if(*chan->GetArraySubposition() == 'F'){
       hit.SetRingNumber(chan->GetSegment());
       hit.SetSectorNumber(-1);
@@ -83,77 +108,136 @@ int TJanus::BuildHits(std::vector<TRawEvent>& raw_data){
   return ring_hits.size() + sector_hits.size();
 }
 
+/*******************************************************************************/
+/* Functions to call JANUS hits ************************************************/
+/*******************************************************************************/
 TDetectorHit& TJanus::GetHit(int i){
   return janus_hits.at(i);
 }
 
-
-TVector3 TJanus::GetPosition(int detnum, int ring_num, int sector_num){
-  if(detnum<0 || detnum>1 ||
-     ring_num<1 || ring_num>24 ||
-     sector_num<1 || sector_num>32){
-    return TVector3(std::sqrt(-1),std::sqrt(-1),std::sqrt(-1));
-  }
-
-  TVector3 origin = TVector3(0,0,3);
-  // Phi of sector 1 of downstream detector
-  double phi_offset = 2*3.1415926535*(0.25);
-
-  // Winding direction of sectors.
-  bool clockwise = true;
-
-  double janus_outer_radius = 3.5;
-  double janus_inner_radius = 1.1;
-
-  TVector3 position(1,0,0);  // Not (0,0,0), because otherwise SetPerp and SetPhi fail.
-  double rad_slope = (janus_outer_radius - janus_inner_radius) /24;
-  double rad_offset = janus_inner_radius;
-  double perp_num = ring_num - 0.5; // Shift to 0.5-23.5
-  position.SetPerp(perp_num*rad_slope + rad_offset);
-  double phi_num = sector_num;
-  double phi =
-    phi_offset +
-    (clockwise ? -1 : 1) * 2*3.1415926/32 * (phi_num - 1);
-  position.SetPhi(phi);
-
-  position += origin;
-
-  if(detnum==0){
-    position.RotateY(TMath::Pi());
-  }
-
-  return position;
+TJanusHit& TJanus::GetRingHit(int i) {
+  return ring_hits.at(i);
 }
 
+TJanusHit& TJanus::GetSectorHit(int i) {
+  return sector_hits.at(i);
+}
+
+TJanusHit& TJanus::GetJanusHit(int i) {
+  return janus_hits.at(i);
+}
+
+/*******************************************************************************/
+/* When function is called builds a Janus hit from the Ring/sector information */
+/* and returns size of the newly created hit vector ****************************/
+/*******************************************************************************/
 Int_t TJanus::GetJanusSize() {
   BuildJanusHit();
   return janus_hits.size();
 }
 
+/*******************************************************************************/
+/* Main function to build a JANUS hits from ring and sector hit vectors ********/
+/* Hits are built according to Energy/Time conditions which can be changed *****/
+/* The Values which can be adjusted are ****************************************/
+/* DThesh   - Set by TJanus::SetDownChargeThresh(double) - Exclude downstream **/
+/*            ring/sector hits with charge less than DThesh ********************/
+/* UThesh   - Set by TJanus::SetUpChargeThresh(double) - Exclude upstream ******/
+/*            ring/sector hits with charge less than DThesh ********************/
+/* TDiff    - Set by SetFrontBackTime(int) - janus hits will be built only if **/
+/*            Ring/Sector occur within TDiff (in ns) of each other *************/
+/* EDiff    - Set by SetFrontBackEnergy(double) - janus hits will be built *****/
+/* 	      only if Ring/Sector Charge/Energy ratio > EDiff of each other ****/
+/* EBuild   - Set by SetEnergyBuild(bool) - If true uses calibrated energies ***/
+/*	      to make janus hits otherwise uses raw charge *********************/
+/* Addback  - Set by SetAddback(bool) - If true loop over ring/sector hits to **/
+/*            check for charge/sharing between neighbouring ring/sectors and ***/
+/*	      perform a simple addback before trying to create a janus hit *****/
+/* MultiHit - Set by SetMultiHit(bool) - If true will consider cases where *****/
+/*            you have two hits with the same ring and different sectors and ***/
+/*            vice versa, this is typically a small correction *****************/
+/*******************************************************************************/
 void TJanus::BuildJanusHit() {
-  //Constructs front/back coincidences, energy and time differences can be changed with
-  //SetFrontBackEn and SetFrontBackTime
+  //Clears any data in hit vector
   janus_hits.clear();
-  //std::cout << "Begin Hit" << std::endl;
+  //If either rings or sectors are empty do nothing
   if(ring_hits.size() == 0 || sector_hits.size() == 0) return;
 
-  //For storage of energies
+  //Define vector to have easier access to ring/sector energy/charges
   std::vector<double> EnR, EnS;
+  EnR.resize(ring_hits.size(), 0.0);
+  EnS.resize(sector_hits.size(), 0.0);
+
+  //Define boolean vectors used to ensure the same ring/sector cannot be used
+  //to make multiple hits
   std::vector<bool> UR, US;
+  UR.resize(ring_hits.size(), false);
+  US.resize(sector_hits.size(), false);
 
+
+  //Exclude ring hits if the charge is below the charge threshold performs
+  //addback if selected by SetAddback()
   for(size_t i = 0; i < ring_hits.size(); i++) {
-    EnR.push_back(ring_hits.at(i).GetEnergy());
-    UR.push_back(false);
+    if(UR.at(i)) continue;
+    if( (ring_hits.at(i).Charge() < DThresh  && ring_hits.at(i).IsDownstream()) ||
+       (ring_hits.at(i).Charge() < UThresh  && !ring_hits.at(i).IsDownstream())) {
+      UR.at(i) = true;
+      continue;
+    }
+    if(Addback) {
+      for(size_t j = i + 1; j < ring_hits.size(); j++) {
+        if((ring_hits.at(j).Charge() < DThresh) && ring_hits.at(j).IsDownstream()) continue;
+        if((ring_hits.at(j).Charge() < UThresh) && !ring_hits.at(j).IsDownstream()) continue;
+	if((ring_hits.at(i).GetDetnum() == ring_hits.at(j).GetDetnum()) && (abs(ring_hits.at(i).Timestamp() - ring_hits.at(j).Timestamp()) < TDiff)) {
+	  int dRing = abs(ring_hits.at(i).GetRing() - ring_hits.at(j).GetRing());
+	  if(dRing == 1) {
+	    ring_hits.at(i).SetCharge(ring_hits.at(i).Charge() + ring_hits.at(j).Charge());
+	    UR.at(j) = true;
+	  }
+	}
+      }
+    }
+    if(EBuild) {
+      EnR.at(i) = ring_hits.at(i).GetEnergy();
+    } else {
+      EnR.at(i) = ring_hits.at(i).Charge();
+    }
   }
 
+  //Exclude sectors hits if the charge is below the charge threshold performs
+  //addback if selected by SetAddback()
   for(size_t i = 0; i < sector_hits.size(); i++) {
-    EnS.push_back(sector_hits.at(i).GetEnergy());
-    US.push_back(false);
+    if(US.at(i)) continue;
+    if( (sector_hits.at(i).Charge() < DThresh  && sector_hits.at(i).IsDownstream()) ||
+        (sector_hits.at(i).Charge() < UThresh  && !sector_hits.at(i).IsDownstream())) {
+      US.at(i) = true;
+      continue;
+    }
+    if(Addback) {
+      for(size_t j = i + 1; j < sector_hits.size(); j++) {
+        if(sector_hits.at(j).Charge() < DThresh  && sector_hits.at(j).IsDownstream()) continue;
+        if(sector_hits.at(j).Charge() < UThresh  && !sector_hits.at(j).IsDownstream()) continue;
+	if((sector_hits.at(i).GetDetnum() == sector_hits.at(j).GetDetnum()) && (abs(sector_hits.at(i).Timestamp() - sector_hits.at(j).Timestamp()) < TDiff)) {
+	  int dSector = abs(sector_hits.at(i).GetSector() - sector_hits.at(j).GetSector());
+	  if(dSector == 1 || dSector == NSector) {
+	    sector_hits.at(i).SetCharge(sector_hits.at(i).Charge() + sector_hits.at(j).Charge());
+	    US.at(j) = true;
+	  }
+	}
+      }
+    }
+    if(EBuild) {
+      EnS.at(i) = sector_hits.at(i).GetEnergy();
+    } else {
+      EnS.at(i) = sector_hits.at(i).Charge();
+    }
   }
 
-
+  //Main part of function which creates a hit
   for(size_t i = 0; i < ring_hits.size(); i++) {
+    if(UR.at(i)) continue;
     for(size_t j = 0; j < sector_hits.size(); j++) {
+      if(US.at(j)) continue;
       if(ring_hits.at(i).GetDetnum() == sector_hits.at(j).GetDetnum()) {
 	//Check time between events is good
 	if(abs(ring_hits.at(i).Timestamp() - sector_hits.at(j).Timestamp()) < TDiff) {
@@ -162,8 +246,9 @@ void TJanus::BuildJanusHit() {
 	    //Use rings for all data, sector for position only
 	    TJanusHit dhit = ring_hits.at(i);
 	    dhit.SetSectorNumber(sector_hits.at(j).GetSector());
+	    dhit.SetBackCharge(EnS.at(j));
 	    janus_hits.push_back(dhit);
-	    //For multihit events
+	    //Now that hit is created do not consider this ring/sector again
 	    UR.at(i) = true;
 	    US.at(j) = true;
 	  }
@@ -171,17 +256,10 @@ void TJanus::BuildJanusHit() {
       }
     }
   }
-  if(multhit) {
-    int ringCount = 0;
-    int secCount = 0;
-    //Check for hits without segments, charge may be shared between multiple strips
-    for(size_t i = 0; i < UR.size(); i++) {
-      if(!UR.at(i)) ringCount++;
-    }
-    for(size_t i = 0; i < US.size(); i++) {
-      if(!US.at(i)) secCount++;
-    }
-    // Check for single ring hit + multiple sectors
+  //Consider cases where two hits have the same ring but different sectors or
+  //the same sector and different rings
+  if(Multihit) {
+    //Check for cases with a single ring hit + multiple sectors
     for(size_t i = 0; i < UR.size(); i++) {
       if(UR.at(i)) continue;
       for(size_t j = 0; j < US.size(); j++) {
@@ -190,31 +268,26 @@ void TJanus::BuildJanusHit() {
         for(size_t k = j+1; k < US.size(); k++) {
           if(US.at(k)) continue;
           if(ring_hits.at(i).GetDetnum() != sector_hits.at(k).GetDetnum()) continue;
-	  //Check time of hits
+	  //Check all hits are within TDiff of each other
   	  if(abs(ring_hits.at(i).Timestamp() - sector_hits.at(j).Timestamp()) < TDiff &&
              abs(ring_hits.at(i).Timestamp() - sector_hits.at(k).Timestamp()) < TDiff) {
-	    //check ring energy is equal to sum of sector energy
+	    //check ring energy is equal to sum of sector energies
 	    if((EnR.at(i)*EWin) < EnS.at(j)+EnS.at(k) && ((EnS.at(j)+EnS.at(k))*EWin) < EnR.at(i)) {
 	      int dSec = abs(sector_hits.at(j).GetSector() - sector_hits.at(k).GetSector());
-	      if( dSec == 1 || dSec == NSector) {  //Check for neighbouring Sectors
-		//Likely a charge sharing event, create a new hit
-		TJanusHit dhit = ring_hits.at(i);
-		//Assign sector number as highest energy strip
-	        if(sector_hits.at(j) < sector_hits.at(k)) {
-		  dhit.SetSectorNumber(sector_hits.at(k).GetSector());
-		} else {
-                  dhit.SetSectorNumber(sector_hits.at(j).GetSector());
-		}
-		janus_hits.push_back(dhit);
-	      } else {
-		//Two different hits with the same ring
-		//Have to use sector information for hit, ring gives position only
+	      //If using Addback this should never be true, if not that you don't want addback anyway so skip
+	      if(( dSec == 1 || dSec == NSector)) continue;
+	      else {
+		//Two different hits within the same ring
+		//Make two hits using sector information for hit, ring gives position only
+		//For ring (back) charge/energy take it as the ratio of sector charges/energies
 		TJanusHit dhit0 = sector_hits.at(j);
 		dhit0.SetRingNumber(ring_hits.at(i).GetRing());
-		janus_hits.push_back(dhit0);
+     	        dhit0.SetBackCharge(EnR.at(i)*(EnS.at(j)/(EnS.at(j)+EnS.at(k))));
+  	        janus_hits.push_back(dhit0);
 
 		TJanusHit dhit1 = sector_hits.at(k);
 		dhit1.SetRingNumber(ring_hits.at(i).GetRing());
+     	        dhit1.SetBackCharge(EnR.at(i)*(EnS.at(k)/(EnS.at(j)+EnS.at(k))));
 		janus_hits.push_back(dhit1);
 	      } //Sector difference
 	      UR.at(i) = true;
@@ -226,16 +299,6 @@ void TJanus::BuildJanusHit() {
       } //1st sector
     }  //Shared Ring
 
-
-    ringCount = 0;
-    secCount = 0;
-    //Check for hits without segments, charge may be shared between multiple strips
-    for(size_t i = 0; i < UR.size(); i++) {
-      if(!UR.at(i)) ringCount++;
-    }
-    for(size_t i = 0; i < US.size(); i++) {
-      if(!US.at(i)) secCount++;
-    }
     // Check for single sector hit + multiple rings
     for(size_t i = 0; i < US.size(); i++) {
       if(US.at(i)) continue;
@@ -251,28 +314,23 @@ void TJanus::BuildJanusHit() {
 	    //check sector energy is equal to sum of ring energy
 	    if((EnS.at(i)*EWin) < EnR.at(j)+EnR.at(k) && ((EnR.at(j)+EnR.at(k))*EWin) < EnS.at(i)) {
 	      int dRing = abs(ring_hits.at(j).GetRing() - ring_hits.at(k).GetRing());
-	      if( dRing == 1 || dRing == NRing) {  //Check for neighbouring rings
-		//Likely a charge sharing event, create a new hit
-		//Use sector information for hit, ring gives position only
-		TJanusHit dhit = sector_hits.at(i);
-		//Assign ring number as highest energy strip
-	        if(ring_hits.at(j) < ring_hits.at(k)) {
-		  dhit.SetRingNumber(ring_hits.at(k).GetRing());
-		} else {
-                  dhit.SetRingNumber(ring_hits.at(j).GetRing());
-		}
-		janus_hits.push_back(dhit);
-	      } else {
-		//Two different hits with the same sector
-		//Use ring information for hit, sector gives position only
+	      //If using Addback this should never be true, if not that you don't want addback anyway so skip
+	      if( dRing == 1)  continue;
+	      else {
+		//Two different hits within the same sector
+		//Make two hits using ring information for hit, sector gives position only
+		//For sector (back) charge/energy take it as the ratio of ring charges/energies
 		TJanusHit dhit0 = ring_hits.at(j);
 		dhit0.SetSectorNumber(sector_hits.at(i).GetSector());
+     	        dhit0.SetBackCharge(EnS.at(i)*(EnR.at(j)/EnR.at(j)+EnR.at(k)));
 		janus_hits.push_back(dhit0);
 
 		TJanusHit dhit1 = ring_hits.at(k);
 		dhit1.SetSectorNumber(sector_hits.at(i).GetRing());
+     	        dhit1.SetBackCharge(EnS.at(i)*(EnR.at(k)/EnR.at(j)+EnR.at(k)));
 		janus_hits.push_back(dhit1);
 	      } //Ring difference
+  	      //Now that hit is created do not consider this ring/sector again
 	      US.at(i) = true;
 	      UR.at(j) = true;
 	      UR.at(k) = true;
@@ -284,6 +342,10 @@ void TJanus::BuildJanusHit() {
   }  //Multihit
 }
 
+/*******************************************************************************/
+/* Gets hit position based on which ring and sector are hit ********************/
+/* Use smear to get a uniform distribution over the size of the "Pixel" ********/
+/*******************************************************************************/
 TVector3 TJanus::GetPosition(int ring, int sector, double zoffset, bool sectorsdownstream, bool smear) {
   double ring_width = (OuterDiameter - InnerDiameter) * 0.5 / NRing;
   double inner_radius = (InnerDiameter)/2;
@@ -309,23 +371,17 @@ TVector3 TJanus::GetPosition(int ring, int sector, double zoffset, bool sectorsd
   return TVector3(cos(phi) * radius, sin(phi) * radius, zoffset);
 }
 
+/*******************************************************************************/
+/* Required by TDetector, unused otherwise *************************************/
+/*******************************************************************************/
 void TJanus::InsertHit(const TDetectorHit& hit) {
   janus_hits.emplace_back((TJanusHit&)hit);
   fSize++;
 }
 
-TJanusHit& TJanus::GetRingHit(int i) {
-  return ring_hits.at(i);
-}
-
-TJanusHit& TJanus::GetSectorHit(int i) {
-  return sector_hits.at(i);
-}
-
-TJanusHit& TJanus::GetJanusHit(int i) {
-  return janus_hits.at(i);
-}
-
+/*******************************************************************************/
+/* Basic print function - Not currently too useful *****************************/
+/*******************************************************************************/
 void TJanus::Print(Option_t *opt) const {
   std::cout << "TJanus @ " << Timestamp() << std::endl;
   std::cout << "Size: " << Size() << std::endl;

@@ -11,9 +11,10 @@
 
 std::map<int,TSega::Transformation> TSega::detector_positions;
 
-#include "chrono"
-using namespace std::chrono;
-
+/*******************************************************************************/
+/* TSega ***********************************************************************/
+/* Main class for unpacking SeGA in DDAS electronics ***************************/
+/*******************************************************************************/
 TSega::TSega(){ }
 
 TSega::~TSega(){ }
@@ -50,15 +51,13 @@ TDetectorHit& TSega::GetHit(int i){
 /* Unpacks raw DDAS data and builds TSega events *******************************/
 /*******************************************************************************/
 int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
-//  auto start = high_resolution_clock::now();
-
   long int smallest_timestamp = 0x7fffffffffffffff;
   for(auto& event : raw_data){
-    //Unpack raw data into a DDAS Event
+    //Get raw data and unpacks it as a DDAS Event (DDASDataFormat.h)
     TSmartBuffer buf = event.GetPayloadBuffer();
     TDDASEvent<DDASHeader> ddas(buf);
     unsigned int address = ( (1<<24) + (ddas.GetCrateID()<<16) + (ddas.GetSlotID()<<8) + ddas.GetChannelID() );
-    //If channel not found in channels.cal file skip and do nothing
+    //If channel not found in calibration file (*.cal) file skip and do nothing
     TChannel* chan = TChannel::GetChannel(address);
     static int lines_displayed = 0;
     if(!chan){
@@ -130,9 +129,6 @@ int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
   //set the TSeGA  time....
   SetTimestamp(smallest_timestamp);  //fix me pcb
 
-//  auto stop = high_resolution_clock::now();
-//  auto duration = duration_cast<nanoseconds>(stop - start);
-//  std::cout << "Time taken in TSeGA " << duration.count() << " microseconds" << std::endl;
   return Size();
 }
 
