@@ -18,6 +18,12 @@
 #include "TReaction.h"
 #include "TSRIM.h"
 
+/*******************************************************************************/
+/* TJanusDDAS ******************************************************************/
+/* Legacy class for unpacking JANUS (2 S3 Detectors) in DDAS electronics *******/
+/* This class will remain for legacy codes, but will not be supported further **/
+/* nor will any documnetation be provided TJanus should be used instead ********/
+/*******************************************************************************/
 TJanusDDAS::TJanusDDAS() {
   Clear();
 }

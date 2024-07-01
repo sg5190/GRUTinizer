@@ -60,15 +60,12 @@ int TDetector::Build(std::vector<TRawEvent>& raw_data){
   return output;
 }
 
-
-
-
 int TDetector::Build() {
   //this is a debug hack added by pcb on 5/1/16
   return BuildHits(fRawData);
 }
 
-int TDetector::BuildHits(std::vector<TRawEvent*> &raw_data) { 
+int TDetector::BuildHits(std::vector<TRawEvent*> &raw_data) {
   //this is a debug hack added by pcb on 5/1/16
   std::vector<TRawEvent> event;
   for(auto it : fRawData) {
@@ -77,13 +74,10 @@ int TDetector::BuildHits(std::vector<TRawEvent*> &raw_data) {
   return BuildHits(event);
 }
 
-
 void TDetector::Streamer(TBuffer &r_b) {
   if(r_b.IsReading()) {
     r_b.ReadClassBuffer(TDetector::Class(),this);
-  } else { 
+  } else {
     r_b.WriteClassBuffer(TDetector::Class(),this);
   }
 }
-
-

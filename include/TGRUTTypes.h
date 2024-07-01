@@ -10,24 +10,21 @@
 
 enum kDetectorSystems {
   UNKNOWN_SYSTEM = -1,
-
-  GRETINA    = 1,
-  MODE3      = 2,
-  S800       = 5,
-  S800SCALER = 10,
-  BANK88     = 8,
-  GRETINA_SIM= 11,
-  S800_SIM   = 9,
-  LENDA      = 21,
-  DDAS	     = 25,
-
-  SEGA = 64,
-  JANUS = 65,
-  JANUS_DDAS = 66,
-  FASTSCINT =4,
-
-  CAESAR = 80,
-
+  GRETINA     = 1,
+  MODE3       = 2,
+  FASTSCINT   = 4,
+  S800        = 5,
+  S800SCALER  = 10,
+  BANK88      = 8,
+  GRETINA_SIM = 11,
+  S800_SIM    = 9,
+  LENDA       = 21,
+  DDAS	      = 25,
+  SEGA        = 64,
+  JANUS       = 65,
+  JANUS_DDAS  = 66,
+  SUN	      = 70,
+  CAESAR      = 80,
   NSCLSCALERS = 100
 };
 

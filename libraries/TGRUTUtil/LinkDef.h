@@ -15,9 +15,9 @@
 #pragma link C++ class TPresetPad+;
 #pragma link C++ class TPresetCanvas-;
 
-#pragma link C++ class TGRUTUtilities+;
-
 #pragma link C++ class TGates+;
+
+//#pragma link C++ class TGRUTUtilities+;
 
 #pragma link C++ function get_run_number;
 #pragma link C++ function FindColor;

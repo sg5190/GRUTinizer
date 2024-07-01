@@ -64,6 +64,3 @@ int TFSU::BuildHits(std::vector<TRawEvent>& raw_data) {
   //Print("all");
   return fFSUHits.size();
 }
-
-
-
