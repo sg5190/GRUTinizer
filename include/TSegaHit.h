@@ -18,7 +18,7 @@ public:
 
   virtual Int_t Charge() const;
 
-  int GetDetnum() const;
+  Int_t GetDetnum() const;
   int GetMainSegnum() const;
 
   bool HasCore() const;

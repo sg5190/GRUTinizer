@@ -23,7 +23,6 @@ public:
   int GetFrontChannel() const;
   int GetBackChannel() const;
 
-  int GetDetnum() const;
   int GetRing() const;
   int GetSector() const;
 

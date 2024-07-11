@@ -11,7 +11,6 @@
 #include "TRandom.h"
 
 #include "DDASDataFormat.h"
-#include "JanusDataFormat.h"
 #include "TRawEvent.h"
 #include "TChannel.h"
 #include "GValue.h"

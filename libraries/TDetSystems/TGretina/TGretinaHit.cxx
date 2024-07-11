@@ -372,26 +372,6 @@ TVector3 TGretinaHit::GetPosition() const {
 }
 
 /*******************************************************************************/
-/* Gets Detector Number - Corresponds to Real Detetor number (Q1..Q12 etc.) ****/
-/* Requires Calibration file ***************************************************/
-/*******************************************************************************/
-int TGretinaHit::GetDetnum() const {
-  TChannel* chan = TChannel::GetChannel(fAddress);
-  int output = -1;
-  if(chan && fAddress!=-1){
-    output = chan->GetArrayPosition();
-  } else {
-    output = -1;
-  }
-
-  if(output == -1 && chan){
-    // std::cout << "Chan with det=-1: " << chan->GetName() << std::endl;
-    // std::cout << "address: " << fAddress << std::endl;
-  }
-  return output;
-}
-
-/*******************************************************************************/
 /* TInteractionPoint ***********************************************************/
 /* Used by TCluster to do tracking *********************************************/
 /* Currently not used for FRIB fast beam analysis ******************************/

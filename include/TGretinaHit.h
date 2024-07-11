@@ -129,7 +129,6 @@ public:
   Int_t    GetCrystalId()       const { return fCrystalId;      }
   Int_t    GetHoleNumber()      const { return fCrystalId/4-1;  }
   Int_t    GetCrystalNumber()   const { return fCrystalId%4;    }
-  Int_t    GetDetnum()       const;
   Int_t    GetArrayNumber()     const { return 4*(GetDetnum() - 1) + GetCrystalNumber(); }
   Float_t  GetCoreEnergy()      const;
   Int_t    GetCoreCharge(int i) const { return fCoreCharge[i];  }

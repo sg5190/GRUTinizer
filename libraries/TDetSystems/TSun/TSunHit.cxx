@@ -43,20 +43,6 @@ void TSunHit::SetTrace(unsigned int trace_length, const unsigned short* trace) {
 }
 
 /*******************************************************************************/
-/* Returns detector number based on channels.cal file definition ***************/
-/*******************************************************************************/
-int TSunHit::GetDetnum() const {
-  TChannel* chan = TChannel::GetChannel(fAddress);
-  int output = -1;
-  if(chan && fAddress!=-1){
-    output = chan->GetArrayPosition();
-  } else {
-    output = -1;
-  }
-  return output;
-}
-
-/*******************************************************************************/
 /* Returns DDAS crate/slot channel number **************************************/
 /*******************************************************************************/
 int TSunHit::GetCrate() const {

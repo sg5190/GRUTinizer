@@ -20,7 +20,6 @@ class TLendaHit : public TDetectorHit {
 //    std::vector<Double_t>* GetFF()  		{ return &fFastFilter; }
 
     void SetTrace(unsigned int trace_length, const unsigned short* trace);
-    void SetDetectorNumber(int dnum) { fDetector = dnum; }
 
     int Size() { return fTrace.size(); }
 
@@ -35,7 +34,7 @@ class TLendaHit : public TDetectorHit {
     int GetSlot()    const;
     int GetCrate()   const;
     int GetChannel() const;
-    int GetDetnum() const { return fDetector; }
+    Int_t GetDetnum() const { return fDetector; }
     TVector3 GetPosition() { return TVector3(0,0,1); }
 
     int GetPosArray() const { return fArrayPosition;   }

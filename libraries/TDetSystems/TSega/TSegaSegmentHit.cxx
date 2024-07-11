@@ -49,20 +49,6 @@ void TSegaSegmentHit::SetTrace(unsigned int trace_length, const unsigned short* 
 }
 
 /*******************************************************************************/
-/* Returns detector number based on channels.cal file definition ***************/
-/*******************************************************************************/
-int TSegaSegmentHit::GetDetnum() const {
-  TChannel* chan = TChannel::GetChannel(fAddress);
-  if(chan){
-    return chan->GetArrayPosition();
-  } else {
-    std::cout << "Unknown address: " << std::hex << fAddress << std::dec
-              << std::endl;
-    return -1;
-  }
-}
-
-/*******************************************************************************/
 /* Returns segment number based on channels.cal file definition ****************/
 /*******************************************************************************/
 int TSegaSegmentHit::GetSegnum() const {
