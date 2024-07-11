@@ -21,8 +21,8 @@ public:
 
   Int_t  Address()   const      { return fAddress; }
   virtual Int_t  Charge() const;
-//  virtual Int_t  Time() const           { return fTime; }
   virtual Double_t  Time() const           { return fTime; }
+  virtual Int_t GetDetnum() const;
   virtual double  CFDTime() const           { return fCFD; }
   long   Timestamp() const      { return fTimestamp; }
 
@@ -56,11 +56,9 @@ protected:
   Int_t   fAddress;
   long    fTimestamp;
   Float_t fCharge;
-//  int fTime;
   double fTime;
   double fCFD;
   unsigned char fFlags;
-
 
   enum EHitFlags {
     kIsEnergy = BIT(0),

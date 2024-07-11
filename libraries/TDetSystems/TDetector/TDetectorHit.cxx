@@ -9,6 +9,10 @@
 
 ClassImp(TDetectorHit)
 
+/*******************************************************************************/
+/* TDetectorHit ****************************************************************/
+/* Base class for all detector hits  *******************************************/
+/*******************************************************************************/
 const TVector3 TDetectorHit::BeamUnitVec(0,0,1);
 
 TDetectorHit::TDetectorHit() {
@@ -18,6 +22,9 @@ TDetectorHit::TDetectorHit() {
 
 TDetectorHit::~TDetectorHit() { }
 
+/*******************************************************************************/
+/* Clears hit  *****************************************************************/
+/*******************************************************************************/
 void TDetectorHit::Clear(Option_t *opt) {
   TObject::Clear(opt);
   fAddress = -1;
@@ -27,8 +34,15 @@ void TDetectorHit::Clear(Option_t *opt) {
   fFlags = 0;
 }
 
+/*******************************************************************************/
+/* Virtual Print Function ******************************************************/
+/* Print function should be defined in derived classes *************************/
+/*******************************************************************************/
 void TDetectorHit::Print(Option_t *opt) const { }
 
+/*******************************************************************************/
+/* Copy hit ********************************************************************/
+/*******************************************************************************/
 void TDetectorHit::Copy(TObject& obj) const {
   TObject::Copy(obj);
 
@@ -40,6 +54,9 @@ void TDetectorHit::Copy(TObject& obj) const {
   hit.fFlags = fFlags;
 }
 
+/*******************************************************************************/
+/* Sets detector charge + Energy ***********************************************/
+/*******************************************************************************/
 void TDetectorHit::SetCharge(int charge) {
   fCharge = charge + gRandom->Uniform();
   fFlags &= ~kIsEnergy;
@@ -56,6 +73,17 @@ Int_t  TDetectorHit::Charge() const {
   } else {
     return fCharge;
   }
+}
+
+Int_t TDetectorHit::GetDetnum() const {
+  TChannel* chan = TChannel::GetChannel(fAddress);
+  int output = -1;
+  if(chan && fAddress !=- 1){
+    output = chan->GetArrayPosition();
+  } else {
+    output = -1;
+  }
+  return output;
 }
 
 double TDetectorHit::GetEnergy() const {

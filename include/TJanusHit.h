@@ -20,7 +20,6 @@ public:
   void SetSectorNumber(int sector) { fSector = sector; }
   void SetBackCharge(int charge) { fBackCharge = charge; }
 
-  int GetDetnum() const;
   int GetRing() const { return fRing; }
   int GetSector() const { return fSector; }
   Double_t BackCharge() const;

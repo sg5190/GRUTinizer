@@ -15,7 +15,6 @@ public:
 
   virtual Int_t Charge() const;
 
-  int GetDetnum() const;
   int GetSegnum() const;
 
   std::vector<unsigned short>& GetTrace() { return fTrace; }

@@ -60,15 +60,6 @@ int TJanusDDASHit::GetBackChannel() const {
   return (slot_id-2)*16 + chan_id;
 }
 
-int TJanusDDASHit::GetDetnum() const {
-  TChannel* chan = TChannel::GetChannel(fAddress);
-  if(chan){
-    return chan->GetArrayPosition();
-  } else {
-    return -1;
-  }
-}
-
 int TJanusDDASHit::GetRing() const {
   TChannel* chan = TChannel::GetChannel(back_hit.Address());
   if(chan){

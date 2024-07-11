@@ -71,7 +71,6 @@ int TSun::BuildHits(std::vector<TRawEvent>& raw_data) {
     //Create a TSunHit
     TSunHit hit;
     hit.SetAddress(address);
-    hit.SetDetectorNumber(chan->GetArrayPosition());
     hit.SetCharge(ddasevt.GetEnergy());
     hit.SetTimestamp(ddasevt.GetTimestamp()); //Timestamp in ns
     hit.SetExtTime(ddasevt.GetExtTimestamp());

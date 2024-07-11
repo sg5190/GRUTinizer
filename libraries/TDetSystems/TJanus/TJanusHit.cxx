@@ -41,21 +41,6 @@ void TJanusHit::Print(Option_t *opt) const {
 }
 
 /*******************************************************************************/
-/* Returns detector number based on channels.cal file definition ***************/
-/*******************************************************************************/
-int TJanusHit::GetDetnum() const {
-  TChannel* chan = TChannel::GetChannel(fAddress);
-  int output = -1;
-  if(chan && fAddress !=- 1){
-    output = chan->GetArrayPosition();
-  } else {
-    // std::cout << "Unknown address: " << std::hex << fAddress << std::dec << std::endl;
-    output = -1;
-  }
-  return output;
-}
-
-/*******************************************************************************/
 /* Returns Hit Position based on ring/sector number ****************************/
 /* If smear is selected the position is smeared to get a uniform distribuition */
 /* apply_array_offset will use offset values defined in values file ************/
@@ -65,7 +50,7 @@ TVector3 TJanusHit::GetPosition(bool smear, bool apply_array_offset) const {
   if(GetDetnum() == 0) secdown = true;
   TVector3 output = TJanus::GetPosition(GetRing() - 1, GetSector() - 1, GetDefaultDistance(), secdown, smear);
   if(apply_array_offset) {
-    if(std::isnan(GValue::Value("Janus_X_offset")) && std::isnan(GValue::Value("Janus_Y_offset")) && std::isnan(GValue::Value("Janus_Z_offset"))) {
+    if(!std::isnan(GValue::Value("Janus_X_offset")) && !std::isnan(GValue::Value("Janus_Y_offset")) && !std::isnan(GValue::Value("Janus_Z_offset"))) {
       output += TVector3(GValue::Value("Janus_X_offset"), GValue::Value("Janus_Y_offset"), GValue::Value("Janus_Z_offset"));
     }
   }

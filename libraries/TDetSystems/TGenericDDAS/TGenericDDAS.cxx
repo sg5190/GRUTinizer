@@ -95,7 +95,6 @@ int TGenericDDAS::BuildHits(std::vector<TRawEvent>& raw_data) {
     //Create a TGenericDDASHit
     TGenericDDASHit hit;
     hit.SetAddress(address);
-    hit.SetDetectorNumber(chan->GetArrayPosition());
     hit.SetCharge(ddasevt.GetEnergy());
     hit.SetTimestamp(ddasevt.GetTimestamp()); // this is now in ns pcb!!
     hit.SetExtTime(ddasevt.GetExtTimestamp());
