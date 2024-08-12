@@ -58,6 +58,7 @@ void getScalerCounts(const char *input_root_file_name, const int final_entry){
   initialize_map(chan_map);
 
   int n_entries = in_tree->GetEntries();
+std::cout << n_entries << std::endl;
   if (final_entry != 0){
     n_entries = final_entry;//forces readout to stop wherever final entry is
   }
@@ -89,7 +90,7 @@ void getScalerCounts(const char *input_root_file_name, const int final_entry){
           }//if triggers are no longer changing, we stop.
         }//if raw clock == live clock, we're in the startup phase
       }//loop over scaler channels
-      if(found_init) prev_10hz = scalers->GetScaler(14);
+      if(found_init && scalers->GetScaler(14) > prev_10hz) prev_10hz = scalers->GetScaler(14);
       if (!found_init && prev_live_trig == 0 && scaler_32.at(10) != 0){
         //initialization events can be in middle of run file. This occurs
         //because the scaler packets at the start of a run are assigned
@@ -117,7 +118,6 @@ void getScalerCounts(const char *input_root_file_name, const int final_entry){
     scaler_32.at(i) += scaler_32_overflows.at(i)*pow(2.,24.);
     scaler_32.at(i) -= init_scaler_32.at(i);
   }
-
   std::cout << "===========================Final Scalers=======================\n";
   for (std::map<int, std::string>::iterator iter = chan_map.begin(); iter != chan_map.end(); ++iter){
     std::cout << iter->second << ": " << scaler_32.at(iter->first) << "\n";

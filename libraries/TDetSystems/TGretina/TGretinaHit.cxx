@@ -102,6 +102,12 @@ void TGretinaHit::BuildFrom(TSmartBuffer& buf){
   board_id += 9;                       //chan  number : 0x000f  information not available here(assume core).
   SetAddress((1<<24) + board_id);
 
+  TChannel *channel = TChannel::GetChannel(Address());
+  if(!channel) {
+    TChannel *newchan = new TChannel(Form("GRR%2.2iXN%2.2iX", fCrystalId/4, fCrystalId%4),Address());
+    TChannel::AddChannel(newchan);
+  }
+
   for(int i=0; i<4; i++){
     fCoreCharge[i] = raw.core_e[i];
   }
@@ -369,6 +375,22 @@ TVector3 TGretinaHit::GetPosition() const {
     gret_pos.SetZ(gret_pos.Z() - gRandom->Gaus(0,fSmearWidth));
   }
   return gret_pos;
+}
+
+/*******************************************************************************/
+/* Remaps crystal ids in order of lowest to highest Theta/Phi depending on the */
+/* channel map provided. Value is equivalent to SpecTcl order ******************/
+/*******************************************************************************/
+Int_t TGretinaHit::GetSpecOrder() const {
+  return TGretina::GetSpecId(fCrystalId, false);
+}
+
+/*******************************************************************************/
+/* Inverse function of GetSpecOrder() returns GetCrystalId() for a given *******/
+/* SpecTcl Order ***************************************************************/
+/*******************************************************************************/
+Int_t TGretinaHit::GetInverseSpecOrder() const {
+  return TGretina::GetSpecId(fCrystalId, true);
 }
 
 /*******************************************************************************/

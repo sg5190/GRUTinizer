@@ -15,9 +15,6 @@
 #include "TFastScint.h"
 #include "TLenda.h"
 
-#include "chrono"
-using namespace std::chrono;
-
 TUnpackedEvent::TUnpackedEvent() { }
 
 TUnpackedEvent::~TUnpackedEvent() {
@@ -27,16 +24,12 @@ TUnpackedEvent::~TUnpackedEvent() {
 }
 
 void TUnpackedEvent::Build() {
-//  auto start = high_resolution_clock::now();
   for(auto& item : raw_data_map) {
     kDetectorSystems detector = item.first;
     std::vector<TRawEvent>& raw_data = item.second;
 //    printf("det %s\n",GetDetector(detector, true)->Class()->GetName());
     GetDetector(detector, true)->Build(raw_data);
   }
-//  auto stop = high_resolution_clock::now();
-//  auto duration = duration_cast<nanoseconds>(stop - start);
-//  std::cout << "Time taken in TSeGA " << duration.count() << " microseconds" << std::endl;
 }
 
 void TUnpackedEvent::AddRawData(const TRawEvent& event, kDetectorSystems detector) {

@@ -167,7 +167,6 @@ float TS800::AdjustedBeta(float beta, float dta) const {
 TVector3 TS800::Track(double sata,double sbta) const {
   double ata = TMath::Sin(GetAta()+sata);
   double bta = TMath::Sin(GetBta()+sbta);
-
   TVector3 track(ata,-bta,sqrt(1-ata*ata-bta*bta));
   return track;
 }
@@ -175,7 +174,6 @@ TVector3 TS800::Track(double sata,double sbta) const {
 TVector3 TS800::Track(float Ata, float Bta, double sata,double sbta) const {
   double ata = TMath::Sin(Ata + sata);
   double bta = TMath::Sin(Bta + sbta);
-
   TVector3 track(ata,-bta,sqrt(1-ata*ata-bta*bta));
   return track;
 }

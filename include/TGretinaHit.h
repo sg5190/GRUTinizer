@@ -121,23 +121,25 @@ public:
   void BuildFrom(TSmartBuffer& raw);
 
 
-  Double_t GetTime()            const { return ((double)Timestamp() + (double)fWalkCorrection)*10.; } //Return Time in ns
-  Float_t  GetT0()              const { return fWalkCorrection; }
-  Float_t  GetTFit()            const { return fWalkCorrection - fTOffset; }
-  Float_t  GetTOffset()         const { return fTOffset; }
+  Double_t GetTime()             const { return ((double)Timestamp() + (double)fWalkCorrection)*10.; } //Return Time in ns
+  Float_t  GetT0()               const { return fWalkCorrection; }
+  Float_t  GetTFit()             const { return fWalkCorrection - fTOffset; }
+  Float_t  GetTOffset()          const { return fTOffset; }
 
-  Int_t    GetCrystalId()       const { return fCrystalId;      }
-  Int_t    GetHoleNumber()      const { return fCrystalId/4-1;  }
-  Int_t    GetCrystalNumber()   const { return fCrystalId%4;    }
-  Int_t    GetArrayNumber()     const { return 4*(GetDetnum() - 1) + GetCrystalNumber(); }
-  Float_t  GetCoreEnergy()      const;
-  Int_t    GetCoreCharge(int i) const { return fCoreCharge[i];  }
-  Float_t  GetCoreEnergy(int i) const;
-  Float_t  GetBaseline()	const { return fBaseline;	}
-  Float_t  GetPoststep()	const { return fPoststep;	}
-  Float_t  GetPrestep()		const { return fPrestep;	}
-  virtual Int_t Charge()        const { return GetCoreCharge(3); }
-  Int_t GetPad() const { return fPad; }
+  Int_t    GetCrystalId()        const { return fCrystalId;      }
+  Int_t    GetHoleNumber()       const { return fCrystalId/4-1;  }
+  Int_t    GetCrystalNumber()    const { return fCrystalId%4;    }
+  Int_t    GetArrayNumber()      const { return 4*(GetDetnum() - 1) + GetCrystalNumber(); }
+  Int_t    GetSpecOrder()        const;
+  Int_t    GetInverseSpecOrder() const;
+  Float_t  GetCoreEnergy()       const;
+  Int_t    GetCoreCharge(int i)  const { return fCoreCharge[i];  }
+  Float_t  GetCoreEnergy(int i)  const;
+  Float_t  GetBaseline()	 const { return fBaseline;	}
+  Float_t  GetPoststep()	 const { return fPoststep;	}
+  Float_t  GetPrestep()		 const { return fPrestep;	}
+  virtual Int_t Charge()         const { return GetCoreCharge(3); }
+  Int_t GetPad()                 const { return fPad; }
 
   const char *GetName() const;
 
