@@ -7,9 +7,6 @@
 #include "TGretina.h"
 #include "TGEBEvent.h"
 
-#include "chrono"
-using namespace std::chrono;
-
 /*******************************************************************************/
 /* TGretina ********************************************************************/
 /* Main Class for Gretina mode2 (Decomposed) analysis **************************/
@@ -26,6 +23,8 @@ Float_t TGretina::m_segpos[2][36][3];
 bool    TGretina::fCRMATSet = false;
 bool    TGretina::fNEIGHBOURSet = false;
 bool	TGretina::gretNeighbour[124][124];
+std::map<int, int> TGretina::fThetaCryMap;
+bool    TGretina::fSetSpec = false;
 
 /*******************************************************************************/
 /* Main function for making addback hits according to procedure defined in *****/
@@ -341,7 +340,6 @@ void TGretina::InsertHit(const TDetectorHit& hit){
 /* Unpacks GEB data and builds TGretinaHit *************************************/
 /*******************************************************************************/
 int TGretina::BuildHits(std::vector<TRawEvent>& raw_data){
-//  auto start = high_resolution_clock::now();
   if(raw_data.size()<1)
     return Size();
   long smallest_time = 0x3fffffffffffffff;
@@ -355,9 +353,6 @@ int TGretina::BuildHits(std::vector<TRawEvent>& raw_data){
     InsertHit(hit);
   }
   SetTimestamp(smallest_time);
-//  auto stop = high_resolution_clock::now();
-//  auto duration = duration_cast<nanoseconds>(stop - start);
-//  std::cout << "Time taken in TSeGA " << duration.count() << " microseconds" << std::endl;
   return Size();
 }
 
@@ -416,4 +411,49 @@ void TGretina::Clear(Option_t *opt) {
   TDetector::Clear(opt);
   gretina_hits.clear();
   addback_hits.clear();
+}
+
+
+/*******************************************************************************/
+/* Called by TGretinaHit::GetSpecOrder *****************************************/
+/* Creates a map of crystals in theta/phi order and returns this order for *****/
+/* given crystal id ************************************************************/
+/*******************************************************************************/
+int TGretina::GetSpecId(int cry_id, bool inverse) {
+  SetSpecId();
+  if(!inverse) {
+    if(fThetaCryMap.find(cry_id) == fThetaCryMap.end()) return -1;
+    else return fThetaCryMap[cry_id];
+  } else {
+    for (const auto& [key, value] : fThetaCryMap) {
+      if(value == cry_id) return key;
+    }
+    return -1;
+  }
+}
+
+/*******************************************************************************/
+/* Uses the channel.cal file to determine which crystals are present and sorts */
+/* them in order of Theta/Phi **************************************************/
+/*******************************************************************************/
+void TGretina::SetSpecId() {
+  if(fSetSpec) {
+    return;
+  }
+
+  std::vector<std::pair<int, TVector3>> crymap;
+  for(auto const& it:  TChannel::fChannelMap) {
+    if((strcmp(it.second->GetSystem(), "GRR") == 0) && (strcmp(it.second->GetCollectedCharge(), "N") == 0)) {
+      int cryid = 4*((it.first & 0x1F00) >> 8) + ((it.first & 0x00C0) >> 6);
+      TVector3 vec = TGretina::GetCrystalPosition(cryid);
+      crymap.push_back(std::make_pair(cryid, vec));
+    }
+  }
+  std::sort(crymap.begin(), crymap.end(), sortcrymap);
+  int size = fThetaCryMap.size();
+  for(int i = 0; i < (int)crymap.size(); i++) {
+    fThetaCryMap.insert(std::make_pair(crymap.at(i).first, size));
+    if(size < (int) fThetaCryMap.size()) size = (int)fThetaCryMap.size();
+  }
+  fSetSpec = true;
 }

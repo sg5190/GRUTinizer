@@ -40,6 +40,16 @@ public:
   static TVector3 GetSegmentPosition(int cryid,int segment); //return the position of the segemnt in the lab system
   static TVector3 GetCrystalPosition(int cryid); //return the position of the crysal in the lab system
 
+  static bool sortcrymap(std::pair<int, TVector3> i, std::pair<int, TVector3> j) {
+    if(std::round(i.second.Theta()*1000.)/1000. == std::round(j.second.Theta()*1000.)/1000.) {
+      return (i.second.Phi() < 0 ? i.second.Phi() + 2*TMath::Pi():i.second.Phi())  < (j.second.Phi() < 0 ? j.second.Phi() + 2*TMath::Pi():j.second.Phi());
+    }
+    else return i.second.Theta() < j.second.Theta();
+  }
+
+  static int GetSpecId(int cryid, bool inverse); //Return CrystalID ordered by theta depending on channel map file
+
+
   static bool IsNeighbour(int ID1, int ID2) {SetGretNeighbours(); return gretNeighbour[ID1][ID2];}
   static bool IsNeighbour(const TGretinaHit &a, const TGretinaHit &b, bool timegate=true) {
     bool tmpB = false;
@@ -97,7 +107,9 @@ private:
   static void SetCRMAT();
   static void SetSegmentCRMAT();
   static bool fCRMATSet;
-
+  static void SetSpecId();
+  static std::map<int, int> fThetaCryMap;
+  static bool fSetSpec;
   ClassDef(TGretina,3);
 };
 
