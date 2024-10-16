@@ -16,7 +16,7 @@
 class TSmartBuffer;
 class TS800;
 
-/*class TInteractionPoint {
+class TInteractionPoint {
   public:
     TInteractionPoint() { }
     TInteractionPoint(const TInteractionPoint &IP);
@@ -62,7 +62,7 @@ class TS800;
   ClassDef(TInteractionPoint,1)
 
 };
-*/
+
 class interaction_point {
   public:
   interaction_point():fSeg(-1),fX(sqrt(-1)),fY(sqrt(-1)),fZ(sqrt(-1)),fEng(sqrt(-1)),fFrac(sqrt(-1)) { }

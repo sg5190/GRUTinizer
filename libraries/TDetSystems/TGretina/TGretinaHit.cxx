@@ -402,7 +402,7 @@ Int_t TGretinaHit::GetInverseSpecOrder() const {
 /* Used by TCluster to do tracking *********************************************/
 /* Currently not used for FRIB fast beam analysis ******************************/
 /*******************************************************************************/
-/*TInteractionPoint::TInteractionPoint(const TInteractionPoint &IP) {
+TInteractionPoint::TInteractionPoint(const TInteractionPoint &IP) {
   this->Copy(IP);
 }
 
@@ -435,4 +435,4 @@ void TInteractionPoint::Clear(Option_t *opt) {
     fOrder       = -1;
     fLPosition.SetXYZ(0,0,1);
 }
-*/
+
