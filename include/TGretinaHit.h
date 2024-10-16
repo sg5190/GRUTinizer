@@ -16,7 +16,7 @@
 class TSmartBuffer;
 class TS800;
 
-class TInteractionPoint {
+/*class TInteractionPoint {
   public:
     TInteractionPoint() { }
     TInteractionPoint(const TInteractionPoint &IP);
@@ -62,7 +62,7 @@ class TInteractionPoint {
   ClassDef(TInteractionPoint,1)
 
 };
-
+*/
 class interaction_point {
   public:
   interaction_point():fSeg(-1),fX(sqrt(-1)),fY(sqrt(-1)),fZ(sqrt(-1)),fEng(sqrt(-1)),fFrac(sqrt(-1)) { }
@@ -135,10 +135,12 @@ public:
   Float_t  GetCoreEnergy()       const;
   Int_t    GetCoreCharge(int i)  const { return fCoreCharge[i];  }
   Float_t  GetCoreEnergy(int i)  const;
-  Float_t  GetBaseline()	 const { return fBaseline;	}
-  Float_t  GetPoststep()	 const { return fPoststep;	}
-  Float_t  GetPrestep()		 const { return fPrestep;	}
+  Float_t  GetBaseline()	 const { return fBaseline; 	  }
+  Float_t  GetPoststep()	 const { return fPoststep;	  }
+  Float_t  GetPrestep()		 const { return fPrestep;	  }
   virtual Int_t Charge()         const { return GetCoreCharge(3); }
+  Float_t  GetChi2()		 const { return fChisq;           }
+  Float_t  GetNormChi2()	 const { return fNormChisq;       }
   Int_t GetPad()                 const { return fPad; }
 
   const char *GetName() const;
@@ -238,6 +240,8 @@ private:
   mutable Int_t   fAB;
   Float_t         fWalkCorrection;   //also called t0.
   Float_t         fTOffset; //  t0 = toffset + tFit
+  Float_t	  fChisq;
+  Float_t	  fNormChisq;
   Float_t	  fBaseline;
   Float_t	  fPoststep;
   Float_t	  fPrestep;
