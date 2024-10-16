@@ -207,10 +207,10 @@ Bool_t GGaus::Fit(TH1 *fithist,Option_t *opt) {
 
   if(xlow>xhigh) std::swap(xlow,xhigh);
   fSum = fithist->Integral(fithist->GetXaxis()->FindBin(xlow), fithist->GetXaxis()->FindBin(xhigh));
-  printf("sum between markers: %02f\n",fSum);
+  if(!verbose && !noprint)printf("sum between markers: %02f\n",fSum);
   fDSum = TMath::Sqrt(fSum);
   fSum -= bgArea;
-  printf("sum after subtraction: %02f\n",fSum);
+  if(!verbose && !noprint)printf("sum after subtraction: %02f\n",fSum);
 
   if(!verbose && !noprint) {
     printf("hist: %s\n",fithist->GetName());

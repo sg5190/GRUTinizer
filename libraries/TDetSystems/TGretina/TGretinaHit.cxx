@@ -34,6 +34,8 @@ void TGretinaHit::Copy(TObject &rhs) const {
   ((TGretinaHit&)rhs).fNumberOfInteractions = fNumberOfInteractions;
   ((TGretinaHit&)rhs).fSegments       = fSegments;
   ((TGretinaHit&)rhs).fAB	      = fAB;
+  ((TGretinaHit&)rhs).fChisq          = fChisq;
+  ((TGretinaHit&)rhs).fNormChisq      = fNormChisq;
   ((TGretinaHit&)rhs).fBaseline	      = fBaseline;
   ((TGretinaHit&)rhs).fPrestep	      = fPrestep;
   ((TGretinaHit&)rhs).fPoststep	      = fPoststep;
@@ -111,6 +113,8 @@ void TGretinaHit::BuildFrom(TSmartBuffer& buf){
   for(int i=0; i<4; i++){
     fCoreCharge[i] = raw.core_e[i];
   }
+  fChisq = raw.chisq;
+  fNormChisq = raw.norm_chisq;
   fBaseline = raw.baseline;
   fPrestep = raw.prestep;
   fPoststep = raw.poststep;
@@ -431,3 +435,4 @@ void TInteractionPoint::Clear(Option_t *opt) {
     fOrder       = -1;
     fLPosition.SetXYZ(0,0,1);
 }
+

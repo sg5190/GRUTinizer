@@ -135,10 +135,12 @@ public:
   Float_t  GetCoreEnergy()       const;
   Int_t    GetCoreCharge(int i)  const { return fCoreCharge[i];  }
   Float_t  GetCoreEnergy(int i)  const;
-  Float_t  GetBaseline()	 const { return fBaseline;	}
-  Float_t  GetPoststep()	 const { return fPoststep;	}
-  Float_t  GetPrestep()		 const { return fPrestep;	}
+  Float_t  GetBaseline()	 const { return fBaseline; 	  }
+  Float_t  GetPoststep()	 const { return fPoststep;	  }
+  Float_t  GetPrestep()		 const { return fPrestep;	  }
   virtual Int_t Charge()         const { return GetCoreCharge(3); }
+  Float_t  GetChi2()		 const { return fChisq;           }
+  Float_t  GetNormChi2()	 const { return fNormChisq;       }
   Int_t GetPad()                 const { return fPad; }
 
   const char *GetName() const;
@@ -238,6 +240,8 @@ private:
   mutable Int_t   fAB;
   Float_t         fWalkCorrection;   //also called t0.
   Float_t         fTOffset; //  t0 = toffset + tFit
+  Float_t	  fChisq;
+  Float_t	  fNormChisq;
   Float_t	  fBaseline;
   Float_t	  fPoststep;
   Float_t	  fPrestep;

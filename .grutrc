@@ -20,7 +20,11 @@ Rint.BracketColor: bold green
 Rint.BadBracketColor: bold red underlined
 Rint.TabComColor: magenta
 
-Rint.Load: $(GRUTSYS)/sandbox/PIDHelper.C
+Rint.Logon: $(GRUTSYS)/sandbox/loadMacros.C
+#Rint.Load: $(GRUTSYS)/sandbox/loadMacros.C
+#Rint.Load: $(GRUTSYS)/sandbox/PIDHelper.C
+#Rint.Load: $(GRUTSYS)/sandbox/fit.C
+#Rint.Load: $(GRUTSYS)/sandbox/find_optimal_shifts.C
 
 #default root variables form the grsi enviorment
 Canvas.MoveOpaque: false
@@ -30,8 +34,8 @@ Canvas.ShowToolBar: true
 Canvas.UseScreenFactor: true
 Canvas.ShowGuideLines: false
 
-Root.Fitter: Fumili2
-#Root.Fitter: Minuit
+#Root.Fitter: Fumili2
+Root.Fitter: Minuit
 
 #Gui.Backend: qt
 #Gui.Factory: qt
