@@ -1,4 +1,4 @@
-#include "TGretinaHit.h"
+#include "TGretaHit.h"
 
 #include <algorithm>
 #include <cmath>
@@ -8,37 +8,37 @@
 
 #include "GValue.h"
 #include "TGEBEvent.h"
-#include "TGretina.h"
-#include "TS800.h"
+#include "TGreta.h"
+//#include "TS800.h"
 
-TGretinaHit::TGretinaHit(){ Clear(); }
+TGretaHit::TGretaHit(){ Clear(); }
 
-TGretinaHit::~TGretinaHit(){ }
+TGretaHit::~TGretaHit(){ }
 
-bool TGretinaHit::fSmear = false;
-double TGretinaHit::fSmearWidth = 0.2; // 2 mm
+bool TGretaHit::fSmear = false;
+double TGretaHit::fSmearWidth = 0.2; // 2 mm
 /*******************************************************************************/
 /* Copies hit ******************************************************************/
 /*******************************************************************************/
-void TGretinaHit::Copy(TObject &rhs) const {
+void TGretaHit::Copy(TObject &rhs) const {
   TDetectorHit::Copy(rhs);
-  ((TGretinaHit&)rhs).fWalkCorrection = fWalkCorrection;
-  ((TGretinaHit&)rhs).fPad            = fPad;
-  ((TGretinaHit&)rhs).fTOffset        = fTOffset;
-  ((TGretinaHit&)rhs).fCrystalId      = fCrystalId;
-  ((TGretinaHit&)rhs).fCoreEnergy     = fCoreEnergy;
-  ((TGretinaHit&)rhs).fCoreCharge[0]  = fCoreCharge[0];
-  ((TGretinaHit&)rhs).fCoreCharge[1]  = fCoreCharge[1];
-  ((TGretinaHit&)rhs).fCoreCharge[2]  = fCoreCharge[2];
-  ((TGretinaHit&)rhs).fCoreCharge[3]  = fCoreCharge[3];
-  ((TGretinaHit&)rhs).fNumberOfInteractions = fNumberOfInteractions;
-  ((TGretinaHit&)rhs).fSegments       = fSegments;
-  ((TGretinaHit&)rhs).fAB	      = fAB;
-  ((TGretinaHit&)rhs).fChisq          = fChisq;
-  ((TGretinaHit&)rhs).fNormChisq      = fNormChisq;
-  ((TGretinaHit&)rhs).fBaseline	      = fBaseline;
-  ((TGretinaHit&)rhs).fPrestep	      = fPrestep;
-  ((TGretinaHit&)rhs).fPoststep	      = fPoststep;
+  ((TGretaHit&)rhs).fWalkCorrection = fWalkCorrection;
+  ((TGretaHit&)rhs).fPad            = fPad;
+  ((TGretaHit&)rhs).fTOffset        = fTOffset;
+  ((TGretaHit&)rhs).fCrystalId      = fCrystalId;
+  ((TGretaHit&)rhs).fCoreEnergy     = fCoreEnergy;
+  ((TGretaHit&)rhs).fCoreCharge[0]  = fCoreCharge[0];
+  ((TGretaHit&)rhs).fCoreCharge[1]  = fCoreCharge[1];
+  ((TGretaHit&)rhs).fCoreCharge[2]  = fCoreCharge[2];
+  ((TGretaHit&)rhs).fCoreCharge[3]  = fCoreCharge[3];
+  ((TGretaHit&)rhs).fNumberOfInteractions = fNumberOfInteractions;
+  ((TGretaHit&)rhs).fSegments       = fSegments;
+  ((TGretaHit&)rhs).fAB	      = fAB;
+  ((TGretaHit&)rhs).fChisq          = fChisq;
+  ((TGretaHit&)rhs).fNormChisq      = fNormChisq;
+  ((TGretaHit&)rhs).fBaseline	      = fBaseline;
+  ((TGretaHit&)rhs).fPrestep	      = fPrestep;
+  ((TGretaHit&)rhs).fPoststep	      = fPoststep;
 }
 
 /*******************************************************************************/
@@ -46,8 +46,8 @@ void TGretinaHit::Copy(TObject &rhs) const {
 /* a channels.cal file is provided *********************************************/
 /* If it is an addback event (abdepth => 0) do not calibrate again *************/
 /*******************************************************************************/
-Float_t TGretinaHit::GetCoreEnergy() const {
-  TChannel *channel = TChannel::GetChannel(Address());
+Float_t TGretaHit::GetCoreEnergy() const {
+  TChannel *channel = TChannel::GetChannel(GetAddress());
   if(!channel) return fCoreEnergy;
   if(GetABDepth() < 0) return channel->CalEnergy(fCoreEnergy);
   else return fCoreEnergy;
@@ -58,9 +58,9 @@ Float_t TGretinaHit::GetCoreEnergy() const {
 /* a channels.cal file is provided *********************************************/
 /* If it is an addback event (abdepth => 0) do not calibrate again *************/
 /*******************************************************************************/
-Float_t TGretinaHit::GetCoreEnergy(int i) const {
+Float_t TGretaHit::GetCoreEnergy(int i) const {
   float charge = (float)GetCoreCharge(i) + gRandom->Uniform();
-  TChannel *channel = TChannel::GetChannel(Address()+(i<<4));
+  TChannel *channel = TChannel::GetChannel(GetAddress()+(i<<4));
   if(!channel) return charge;
   if(GetABDepth() <0) return channel->CalEnergy(charge);
   else return charge;
@@ -69,8 +69,8 @@ Float_t TGretinaHit::GetCoreEnergy(int i) const {
 /*******************************************************************************/
 /* Gets mnemonic for channel if a channels.cal file is provided ****************/
 /*******************************************************************************/
-const char *TGretinaHit::GetName() const {
-  TChannel *channel = TChannel::GetChannel(Address());
+const char *TGretaHit::GetName() const {
+  TChannel *channel = TChannel::GetChannel(GetAddress());
   if(channel) return channel->GetName();
   return "";
 }
@@ -79,21 +79,22 @@ const char *TGretinaHit::GetName() const {
 /*******************************************************************************/
 /* Returns position vector for the centre of the crystal ***********************/
 /*******************************************************************************/
-TVector3 TGretinaHit::GetCrystalPosition()  const {
-  return TGretina::GetCrystalPosition(fCrystalId);
+TVector3 TGretaHit::GetCrystalPosition()  const {
+  return TGreta::GetCrystalPosition(fCrystalId);
 }
 
 /*******************************************************************************/
-/* Build TGretina events from mode2 data ***************************************/
+/* Build TGreta events from mode2 data ***************************************/
 /*******************************************************************************/
-void TGretinaHit::BuildFrom(TSmartBuffer& buf){
+void TGretaHit::BuildFrom(TSmartBuffer& buf){
   const TRawEvent::GEBBankType1& raw = *(const TRawEvent::GEBBankType1*)buf.GetData();
 
-  //std::cout << "GretinaHit: " << raw << std::endl;
+  //std::cout << "GretaHit: " << raw << std::endl;
   //std::cout << raw << std::endl;
   Clear();
 
-  SetTimestamp(raw.timestamp);
+  SetTimestamp(raw.timestamp, 10.);
+  SetEnergy(raw.tot_e, false);
   fWalkCorrection = raw.t0;
   fCrystalId = raw.crystal_id;
   fCoreEnergy = raw.tot_e;
@@ -104,9 +105,9 @@ void TGretinaHit::BuildFrom(TSmartBuffer& buf){
   board_id += 9;                       //chan  number : 0x000f  information not available here(assume core).
   SetAddress((1<<24) + board_id);
 
-  TChannel *channel = TChannel::GetChannel(Address());
+  TChannel *channel = TChannel::GetChannel(GetAddress());
   if(!channel) {
-    TChannel *newchan = new TChannel(Form("GRR%2.2iXN%2.2iX", fCrystalId/4, fCrystalId%4),Address());
+    TChannel *newchan = new TChannel(Form("GRR%2.2iXN%2.2iX", fCrystalId/4, fCrystalId%4),GetAddress());
     TChannel::AddChannel(newchan);
   }
 
@@ -144,18 +145,18 @@ void TGretinaHit::BuildFrom(TSmartBuffer& buf){
 /*******************************************************************************/
 /* Returns position vector based on interaction point **************************/
 /*******************************************************************************/
-TVector3 TGretinaHit::GetIntPosition(unsigned int i) const {
+TVector3 TGretaHit::GetIntPosition(unsigned int i) const {
   if(i<fSegments.size()){
-    double xoffset = GValue::Value("GRETINA_X_OFFSET");
+    double xoffset = GValue::Value("GRETA_X_OFFSET");
     if(std::isnan(xoffset))
       xoffset=0.00;
-    double yoffset = GValue::Value("GRETINA_Y_OFFSET");
+    double yoffset = GValue::Value("GRETA_Y_OFFSET");
     if(std::isnan(yoffset))
       yoffset=0.00;
-    double zoffset = GValue::Value("GRETINA_Z_OFFSET");
+    double zoffset = GValue::Value("GRETA_Z_OFFSET");
     if(std::isnan(zoffset))
       zoffset=0.00;
-    TVector3 v = TGretina::CrystalToGlobal(fCrystalId,fSegments.at(i).fX + xoffset,
+    TVector3 v = TGreta::CrystalToGlobal(fCrystalId,fSegments.at(i).fX + xoffset,
         fSegments.at(i).fY + yoffset,
         fSegments.at(i).fZ + zoffset);
     return v;
@@ -166,7 +167,7 @@ TVector3 TGretinaHit::GetIntPosition(unsigned int i) const {
 /*******************************************************************************/
 /* Returns vector for loacl position within the crystal ************************/
 /*******************************************************************************/
-TVector3 TGretinaHit::GetLocalPosition(unsigned int i) const {
+TVector3 TGretaHit::GetLocalPosition(unsigned int i) const {
   if(i<fSegments.size()){
     return TVector3(fSegments.at(i).fX,
         fSegments.at(i).fY,
@@ -181,8 +182,8 @@ TVector3 TGretinaHit::GetLocalPosition(unsigned int i) const {
 /* point, particle vectors and beam beta. Can select gain range otherwise ******/
 /* uses mode2 energy ***********************************************************/
 /*******************************************************************************/
-double TGretinaHit::GetDoppler(double beta,const TVector3 *vec, int EngRange) const {
-  if(Size()<1)
+double TGretaHit::GetDoppler(double beta,const TVector3 *vec, int EngRange) const {
+  if(GetNSegments()<1)
     return 0.0;
   if(vec==0) {
     vec = &BeamUnitVec;
@@ -203,7 +204,7 @@ double TGretinaHit::GetDoppler(double beta,const TVector3 *vec, int EngRange) co
   gret_pos.SetZ(gret_pos.Z() - zoffset);
   
   if(EngRange>-1) tmp = GetCoreEnergy(EngRange)*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
-  else tmp = GetCoreEnergy()*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
+  else tmp = GetEnergy()*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
   return tmp;
 }
 
@@ -213,8 +214,8 @@ double TGretinaHit::GetDoppler(double beta,const TVector3 *vec, int EngRange) co
 /* YTA, calculated using TS800 class. Can select gain range otherwise uses *****/
 /* mode2 energy ****************************************************************/
 /*******************************************************************************/
-double TGretinaHit::GetDopplerYta(double beta, double yta, const TVector3 *vec, int EngRange) const {
-  if(Size()<1)
+double TGretaHit::GetDopplerYta(double beta, double yta, const TVector3 *vec, int EngRange) const {
+  if(GetNSegments()<1)
     return 0.0;
   if(vec==0) {
     vec = &BeamUnitVec;
@@ -229,8 +230,8 @@ double TGretinaHit::GetDopplerYta(double beta, double yta, const TVector3 *vec, 
   return GetDopplerYta(beta, yta, xoffset, yoffset, zoffset, vec, EngRange);
 }
 
-double TGretinaHit::GetDopplerYta(double beta, double yta, double xoffset, double yoffset, double zoffset, const TVector3 *vec, int EngRange) const {
-  if(Size()<1)
+double TGretaHit::GetDopplerYta(double beta, double yta, double xoffset, double yoffset, double zoffset, const TVector3 *vec, int EngRange) const {
+  if(GetNSegments()<1)
     return 0.0;
   if(vec==0) {
     vec = &BeamUnitVec;
@@ -245,7 +246,7 @@ double TGretinaHit::GetDopplerYta(double beta, double yta, double xoffset, doubl
   gret_pos.SetZ(gret_pos.Z() - zoffset);
 
   if(EngRange>-1) tmp = GetCoreEnergy(EngRange)*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
-  else tmp = GetCoreEnergy()*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
+  else tmp = GetEnergy()*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
   return tmp;
 }
 
@@ -253,14 +254,15 @@ double TGretinaHit::GetDopplerYta(double beta, double yta, double xoffset, doubl
 /* Used by Nearest Neighbour Addback code to add energies **********************/
 /* and handle interaction points ***********************************************/
 /*******************************************************************************/
-void TGretinaHit::NNAdd(const TGretinaHit& rhs) {
+void TGretaHit::NNAdd(const TGretaHit& rhs) {
   //copy original hit into singles
   if (!fSetFirstSingles){
-    TGretinaHit myCopy(*this);
+    TGretaHit myCopy(*this);
     fSingles.push_back(myCopy);
     fSetFirstSingles = true;
   }
-  fCoreEnergy += rhs.fCoreEnergy;
+  SetEnergy((GetEnergy() + rhs.GetEnergy()), true);
+//  fCoreEnergy += rhs.fCoreEnergy;
   fSingles.push_back(rhs);
 
   // S.G. - Does it make sense to add interactions points from other crystal?
@@ -277,7 +279,7 @@ void TGretinaHit::NNAdd(const TGretinaHit& rhs) {
 /*******************************************************************************/
 /* Returns position vector based on final interaction point ********************/
 /*******************************************************************************/
-TVector3 TGretinaHit::GetLastPosition() const {
+TVector3 TGretaHit::GetLastPosition() const {
   if(fSegments.size()<1)
     return TDetectorHit::BeamUnitVec;
   return GetIntPosition(fSegments.size()-1);
@@ -286,15 +288,15 @@ TVector3 TGretinaHit::GetLastPosition() const {
 /*******************************************************************************/
 /* Print function **************************************************************/
 /*******************************************************************************/
-void TGretinaHit::Print(Option_t *opt) const {
+void TGretaHit::Print(Option_t *opt) const {
 
-  std::cout << "TGretinaHit:" <<  std::endl;
+  std::cout << "TGretaHit:" <<  std::endl;
   std::cout << "\tAddress:        \t0x" << std::hex << fAddress << std::dec << std::endl;
   std::cout << "\tHole:           \t" << GetHoleNumber()               << std::endl;
   std::cout << "\tCrystalNum      \t" << GetCrystalNumber()            << std::endl;
   std::cout << "\tCrystalId:      \t" << GetCrystalId()                << std::endl;
 
-  std::cout << "\tLocal Timestamp:\t" << Timestamp()                   << std::endl;
+  std::cout << "\tLocal Timestamp:\t" << GetTimestamp()                   << std::endl;
   std::cout << "\tCorrected time: \t" << GetTime()                     << std::endl;
   std::cout << "\tDecomp Energy:  \t" << fCoreEnergy                   << std::endl;
   if(!strcmp(opt,"all")) {
@@ -317,7 +319,7 @@ void TGretinaHit::Print(Option_t *opt) const {
 /*******************************************************************************/
 /* Clears hit ******************************************************************/
 /*******************************************************************************/
-void TGretinaHit::Clear(Option_t *opt) {
+void TGretaHit::Clear(Option_t *opt) {
   TDetectorHit::Clear(opt);
   fWalkCorrection = sqrt(-1);
   fCrystalId      = -1;
@@ -329,6 +331,7 @@ void TGretinaHit::Clear(Option_t *opt) {
   fTOffset = sqrt(-1);
   fPad  = 0;
   fNumberOfInteractions = 0;
+  fAB  = -1;
   fSegments.clear();
 }
 
@@ -338,7 +341,7 @@ void TGretinaHit::Clear(Option_t *opt) {
 /* 0 - drop multiple ident int pnts ********************************************/
 /* 1 - make into wedge data ***************************************************/
 /*******************************************************************************/
-void TGretinaHit::TrimSegments(int type) {
+void TGretaHit::TrimSegments(int type) {
   if(type==0) {
     std::set<interaction_point,intpnt_compare> pset;
     for(auto x=fSegments.begin();x!=fSegments.end();x++) {
@@ -370,7 +373,7 @@ void TGretinaHit::TrimSegments(int type) {
 /* For simulations the position can be smeared with the functions **************/
 /* SetSmear(true/false) and SetSmearWidth(width) width should be in cm *********/
 /*******************************************************************************/
-TVector3 TGretinaHit::GetPosition() const {
+TVector3 TGretaHit::GetPosition() const {
   TVector3 gret_pos = GetIntPosition(0);
   if(!fSmear) {
   } else {
@@ -385,16 +388,16 @@ TVector3 TGretinaHit::GetPosition() const {
 /* Remaps crystal ids in order of lowest to highest Theta/Phi depending on the */
 /* channel map provided. Value is equivalent to SpecTcl order ******************/
 /*******************************************************************************/
-Int_t TGretinaHit::GetSpecOrder() const {
-  return TGretina::GetSpecId(fCrystalId, false);
+Int_t TGretaHit::GetSpecOrder() const {
+  return TGreta::GetSpecId(fCrystalId, false);
 }
 
 /*******************************************************************************/
 /* Inverse function of GetSpecOrder() returns GetCrystalId() for a given *******/
 /* SpecTcl Order ***************************************************************/
 /*******************************************************************************/
-Int_t TGretinaHit::GetInverseSpecOrder() const {
-  return TGretina::GetSpecId(fCrystalId, true);
+Int_t TGretaHit::GetInverseSpecOrder() const {
+  return TGreta::GetSpecId(fCrystalId, true);
 }
 
 /*******************************************************************************/
@@ -402,6 +405,7 @@ Int_t TGretinaHit::GetInverseSpecOrder() const {
 /* Used by TCluster to do tracking *********************************************/
 /* Currently not used for FRIB fast beam analysis ******************************/
 /*******************************************************************************/
+/*
 TInteractionPoint::TInteractionPoint(const TInteractionPoint &IP) {
   this->Copy(IP);
 }
@@ -416,7 +420,7 @@ void TInteractionPoint::Copy(const TInteractionPoint &IP) {
 }
 
 TVector3 TInteractionPoint::GetPosition(int xtal) const {
-  return TGretina::CrystalToGlobal(xtal, fLPosition.X(), fLPosition.Y(), fLPosition.Z());
+  return TGreta::CrystalToGlobal(xtal, fLPosition.X(), fLPosition.Y(), fLPosition.Z());
 }
 
 
@@ -435,4 +439,4 @@ void TInteractionPoint::Clear(Option_t *opt) {
     fOrder       = -1;
     fLPosition.SetXYZ(0,0,1);
 }
-
+*/

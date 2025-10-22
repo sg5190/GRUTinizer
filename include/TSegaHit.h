@@ -27,7 +27,7 @@ public:
   TSegaSegmentHit& GetSegment(int i) { return fSegments.at(i); }
   unsigned long GetSegmentTimestamp() {
     if(fSegments.size()){
-      return fSegments[0].Timestamp();
+      return fSegments[0].GetTimestamp();
     } else {
       return -1;
     }

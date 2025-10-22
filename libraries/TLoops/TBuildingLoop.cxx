@@ -3,6 +3,7 @@
 #include <chrono>
 #include <thread>
 
+using namespace std::chrono;
 ClassImp(TBuildingLoop)
 
 TBuildingLoop *TBuildingLoop::Get(std::string name) {
@@ -60,13 +61,12 @@ bool TBuildingLoop::Iteration(){
 
   CheckBuildWindow(&event);
   next_event.push_back(event);
-
   return true;
 }
 
 bool TBuildingLoop::CheckBuildWindow(TRawEvent *event) {
   long timestamp = event->GetTimestamp();
-
+//  long timestamp = event->GetTimestamp()* 8.7184750e-7 * 1e8;
   if(timestamp == -1){
     return false;
   }

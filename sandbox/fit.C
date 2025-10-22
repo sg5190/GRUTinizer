@@ -73,6 +73,7 @@ vector<float> fitCentroids() {
     en.push_back(tmpP->GetParameter(1));
     gr->SetPoint(i, i, tmpP->GetParameter(1));
     gr->SetPointError(i, 0, tmpP->GetParError(1));
+cout << tmpP->GetParameter(1) << "\t" <<  tmpP->GetParError(1) << endl;
   }
   gr->Draw("A*");
   return en;

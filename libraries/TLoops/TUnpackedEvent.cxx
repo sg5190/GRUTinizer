@@ -3,7 +3,7 @@
 #include "TClass.h"
 #include "TBank88.h"
 #include "TCaesar.h"
-#include "TGretina.h"
+#include "TGreta.h"
 #include "TGretSim.h"
 #include "TJanus.h"
 #include "TMode3.h"

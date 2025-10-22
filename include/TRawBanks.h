@@ -14,8 +14,9 @@
 #define MAX_INTPTS 16
 #define MAX_PWID   256
 #define MAX_LABRID 16
-#define MQDC_ID 161
-#define MTDC_ID 177
+#define MQDC_ID 10
+#define MTDC_ID 20
+#define MDPP_ID 30
 
 // Simulation
 #define MAX_SIM_GAMMAS 10
@@ -124,40 +125,41 @@ struct MTDCHeader {
 
 // General Mesytec Stuff:
 struct Mesy_Word{
-  // This is 2x16 bits = 32 bits.  The MQDC talks in 32 bit words.
+  // This is 2x16 bits = 32 bits The MQDC talks in 32 bit words.
   UShort_t tail;
-  UShort_t nose;
+  UShort_t head;
 
-  bool isHeader() const { return((nose&0xff00)==0x4000); }
-  bool isData()   const { return((nose&0xffc0)==0x0400); } // for QDC 0x0020 should also be 0.  Left out for easy use.
-  bool isETS()    const { return((nose&0xffff)==0x0480); }
-  bool isFILL()   const { return(((nose&0xffff)==0) && ((tail&0xffff)==0)); }
-  bool isALLF()   const { return(((nose&0xffff)==0xffff) && ((tail&0xffff)==0xffff)); }
-  bool isEOE()    const { return(((nose&0xc000)==0xc000) && !(isALLF())); }
+  bool isHeader() const { return((head&0xf000)==0x4000); }
+  bool isData()   const { return(((head&0xffc0)==0x0400) || ((head&0xf000)==0x1000)); } // for QDC 0x0020 should also be 0.  Left out for easy use.
+  bool isETS()    const { return((head&0xffff)==0x0480); }
+  bool isFILL()   const { return(((head&0xffff)==0) && ((tail&0xffff)==0)); }
+  bool isALLF()   const { return(((head&0xffff)==0xffff) && ((tail&0xffff)==0xffff)); }
+  bool isEOE()    const { return(((head&0xc000)==0xc000) && !(isALLF())); }
 }__attribute__((__packed__));
 
 struct Mesy_Header{
   UShort_t tail;
-  UShort_t nose;
+  UShort_t head;
 
   UShort_t format()   const { return ((tail&0x8000)>>15); }
   UShort_t size()     const { return tail&0x0fff; }
-  UShort_t id()       const { return nose&0x00ff; }
+  UShort_t id()       const { return head&0x00ff; }
   UShort_t res()      const { return (tail&0x7000)>>12; }
   bool isQDC()        const { return(id()==MQDC_ID); }
   bool isTDC()        const { return(id()==MTDC_ID); }
+  bool isMDPP()       const { return(id()==MDPP_ID); }
 }__attribute__((__packed__));
 
 struct Mesy_ETS{
   UShort_t tail;
-  UShort_t nose;
+  UShort_t head;
 
   UShort_t ETS()    const { return tail&0xffff; }
 }__attribute__((__packed__));
 
 struct Mesy_FILL{
   UShort_t tail;
-  UShort_t nose;
+  UShort_t head;
 }__attribute__((__packed__));
 
 struct Mesy_EOE{
@@ -169,9 +171,9 @@ struct Mesy_EOE{
 // Mesytec QDC:
 struct M_QDC_Data{
   UShort_t tail;
-  UShort_t nose;
+  UShort_t head;
 
-  UShort_t Chan()   const { return nose&0x001f; }
+  UShort_t Chan()   const { return head&0x001f; }
   UShort_t Charge() const { return tail&0x0fff; }
   UShort_t isOOR()  const { return (tail&0x4000)>>14; }
 }__attribute__((__packed__));
@@ -179,14 +181,72 @@ struct M_QDC_Data{
 // Mesytec TDC:
 struct M_TDC_Data{
   UShort_t tail;
-  UShort_t nose;
+  UShort_t head;
 
-  bool isTrig() const { return((nose&0x0020)>>5); }
-  UShort_t Chan()   const { return nose&0x001f; }
+  bool isTrig() const { return((head&0x0020)>>5); }
+  UShort_t Chan()   const { return head&0x001f; }
   UShort_t Time()   const { return tail&0xffff; }
 }__attribute__((__packed__));
 
+struct M_DPP_Data{
+  UShort_t tail;
+  UShort_t head;
 
+  UShort_t AbsChan()   const { return head&0x007f; }
+  UShort_t Chan()   const {
+    return AbsChan() % 32;
+  }
+  UInt_t DataType()   const {
+    return AbsChan() / 32;
+  }
+  UShort_t Data()   const { return tail&0xffff; }
+}__attribute__((__packed__));
+
+struct VMUSB_Header {
+  uint16_t data;
+
+  // Size in 16-bit words, not self-inclusive.
+  int size()  const { return (data & 0x0fff)>>0; }
+  int stack() const { return (data & 0xf000)>>12; }
+} __attribute__((packed));
+
+friend std::ostream& operator<<(std::ostream& os, const VMUSB_Header& data);
+
+struct CAEN_DataPacket{
+  uint16_t tail, head;
+
+
+  int card_num()         const  { return           (head & 0xf800)>>11; }
+  int crate_num()        const  { return           (head & 0x00ff)>>0;  }
+  int header_zeros()     const  { return           (tail & 0xc000)>>13; }
+  int num_entries()      const  { return           (tail & 0x3f00)>>8;  }
+  int trailing_stuff()   const  { return           (tail & 0x00ff)>>0;  }
+  int channel_num()      const  { return           (head & 0x001f)>>0;  }
+  int adcvalue()         const  { return           (tail & 0x0fff)>>0;  }
+  bool overflow()        const  { return           (tail & 0x1000)>>12; }
+  bool underflow()       const  { return           (tail & 0x2000)>>13; }
+
+  int event_counter() const {
+    uint32_t low_bits = tail;
+    uint32_t high_bits = head & 0x00ff;
+    return low_bits + (high_bits << 16);
+  }
+
+  bool isData() const { return (head & 0x0700)>>8 == 0; }
+  bool isHead() const { return (head & 0x0700)>>8 == 2; }
+  bool isEvcn() const { return (head & 0x0700)>>8 == 4; }
+  bool isEnd()  const { return (head & 0x0700)>>8 == 7; }
+
+} __attribute__((packed));
+
+friend std::ostream& operator<<(std::ostream& os, const CAEN_DataPacket& data);
+
+struct VME_Timestamp{
+  uint16_t buffer[6];
+
+  long ts1() const { return buffer[0] + (long(buffer[1])<<16) + (long(buffer[4])<<32); }
+  long ts2() const { return buffer[2] + (long(buffer[3])<<16) + (long(buffer[5])<<32); }
+} __attribute__((packed));
 
 
 typedef struct {

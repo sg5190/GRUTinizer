@@ -5,13 +5,13 @@
 #include "TRuntimeObjects.h"
 
 #include <TSega.h>
-#include <TJanusDDAS.h>
+#include <TJanus.h>
 
 
 extern "C"
 bool FilterCondition(TRuntimeObjects& obj) {
 
-  TJanusDDAS *janus = obj.GetDetector<TJanusDDAS>();
+  TJanus *janus = obj.GetDetector<TJanus>();
 
   if(!janus)
     {return false;}

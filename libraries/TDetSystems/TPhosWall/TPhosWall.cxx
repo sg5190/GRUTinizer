@@ -67,7 +67,7 @@ void TPhosWall::Print(Option_t *opt) const {
     }
   }
   std::cout << "             A       B       C     Time"  << std::endl;
-  for(int i = 0; i<int(Size()); i++) {
+  for(int i = 0; i<int(GetSize()); i++) {
     if(i==fLargestHit)
       std::cout << DMAGENTA;
     GetPhosWallHit(i).Print(opt);
@@ -92,7 +92,7 @@ int TPhosWall::BuildHits(std::vector<TRawEvent>& raw_data) {
     }
   }
   SortHits();
-  return Size();
+  return GetSize();
 }
 
 void TPhosWall::InsertHit(const TDetectorHit &hit) {
@@ -368,7 +368,7 @@ TVector3 TPhosWall::GetKinVector(Double_t E_ejec,Double_t E_beam,TNucleus &beam,
 }
 
 int TPhosWall::IsInside(Option_t *opt) const {
-  if(!gates.GetSize() || !Size())
+  if(!gates.GetSize() || !GetSize())
     return 0;
   TIter iter(&gates);
   int counter =1;

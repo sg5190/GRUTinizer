@@ -129,7 +129,7 @@ void TGRUTOptions::Load(int argc, char** argv) {
   parser.option("g start-gui",&fStartGui)
     .description("Start the GUI")
     .default_value(false);
-  parser.option("w gretina-waves",&fExtractWaves)
+  parser.option("w greta-waves",&fExtractWaves)
     .description("Extract wave forms to data class when available.")
     .default_value(false);
   parser.option("q quit", &fExitAfterSorting)
@@ -184,7 +184,7 @@ void TGRUTOptions::Load(int argc, char** argv) {
     std::transform(default_file_format.begin(), default_file_format.end(), default_file_format.begin(),
                    (int (*)(int))std::tolower);
     if(default_file_format == "geb"){
-      fDefaultFileType = kFileType::GRETINA_MODE2;
+      fDefaultFileType = kFileType::GRETA_MODE2;
     } else if (default_file_format == "evt") {
       fDefaultFileType = kFileType::NSCL_EVT;
     } else {
@@ -232,8 +232,8 @@ kFileType TGRUTOptions::DetermineFileType(const std::string& filename) const{
     return kFileType::ROOT_MACRO;
   } else if (ext == "dat" || ext == "cvt") {
     if(filename.find("GlobalRaw")!=std::string::npos)
-      return kFileType::GRETINA_MODE3;
-    return kFileType::GRETINA_MODE2;
+      return kFileType::GRETA_MODE3;
+    return kFileType::GRETA_MODE2;
   } else if (ext == "env") {
     return kFileType::DETECTOR_ENVIRONMENT;
   } else if (ext == "hist") {
@@ -266,8 +266,8 @@ kFileType TGRUTOptions::DetermineFileType(const std::string& filename) const{
 bool TGRUTOptions::FileAutoDetect(const std::string& filename) {
   switch(DetermineFileType(filename)){
     case kFileType::NSCL_EVT:
-    case kFileType::GRETINA_MODE2:
-    case kFileType::GRETINA_MODE3:
+    case kFileType::GRETA_MODE2:
+    case kFileType::GRETA_MODE3:
       input_raw_files.push_back(filename);
       return true;
 

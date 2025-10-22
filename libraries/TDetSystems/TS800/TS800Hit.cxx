@@ -37,95 +37,6 @@ void TTrigger::Clear(Option_t *opt) {
 void TTrigger::Print(Option_t *opt) const {  }
 
 /*******************************************************************************/
-/* TToF - Legacy Code **********************************************************/
-/* Used to store data from Phillips 7186 TDC No longer present in S800 DAQ *****/
-/* May Be Removed in Future ****************************************************/
-/* Used primarily for PID purposes *********************************************/
-/*******************************************************************************/
-TTof::TTof() {
-  Clear();
-}
-
-TTof::~TTof() {
-}
-
-/*******************************************************************************/
-/* Copies hit ******************************************************************/
-/*******************************************************************************/
-void TTof::Copy(TObject &obj) const {
-  TDetectorHit::Copy(obj);
-  TTof &tof_ =(TTof&)obj;
-  tof_.frf      = frf;
-  tof_.fobj     = fobj;
-  tof_.fxfp     = fxfp;
-  tof_.fsi      = fsi;
-  tof_.ftac_obj = ftac_obj;
-  tof_.ftac_xfp = ftac_xfp;
-}
-
-/*******************************************************************************/
-/* Clears hit ******************************************************************/
-/*******************************************************************************/
-void TTof::Clear(Option_t *opt) {
-   frf      = -1;
-   fobj     = -1;
-   fxfp     = -1;
-   fsi      = -1;
-   ftac_obj = -1;
-   ftac_xfp = -1;
-}
-
-/*******************************************************************************/
-/* Blank Print Function ********************************************************/
-/*******************************************************************************/
-void TTof::Print(Option_t *opt) const {  }
-
-/*******************************************************************************/
-/* TScintillator - Legacy Code *************************************************/
-/* Used to store data for the S800 FP Scintillator encoded in FERA module and **/
-/* Phillips TDC which are no longer present in S800 DAQ ************************/
-/* May Be Removed in Future ****************************************************/
-/* Used primarily for PID purposes *********************************************/
-/*******************************************************************************/
-TScintillator::TScintillator() {
-  Clear();
-}
-
-TScintillator::~TScintillator() {
-}
-
-/*******************************************************************************/
-/* Copies hit ******************************************************************/
-/*******************************************************************************/
-void TScintillator::Copy(TObject &obj) const {
-  TDetectorHit::Copy(obj);
-  TScintillator &scinti =(TScintillator&)obj;
-  scinti.fID            = fID;
-  scinti.fdE_up         = fdE_up;
-  scinti.fdE_down       = fdE_down;
-  scinti.fTime_up       = fTime_up;
-  scinti.fTime_down     = fTime_down;
-
-}
-
-/*******************************************************************************/
-/* Clears hit ******************************************************************/
-/*******************************************************************************/
-void TScintillator::Clear(Option_t *opt) {
-  fID        = -1;
-  fdE_up     = -1;
-  fdE_down   = -1;
-  fTime_up   = -1;
-  fTime_down = -1;
-}
-
-/*******************************************************************************/
-/* Blank Print Function ********************************************************/
-/*******************************************************************************/
-void TScintillator::Print(Option_t *opt) const { }
-
-
-/*******************************************************************************/
 /* TIonChamber *****************************************************************/
 /* Used to store data from S800 Focal Plane IC used for PID ********************/
 /*******************************************************************************/
@@ -150,7 +61,7 @@ void TIonChamber::Set(int ch, int data){
 float TIonChamber::GetAve(){
   float temp = 0.0;
   for(unsigned int x=0;x<fData.size();x++) {
-    TChannel *c = TChannel::GetChannel(Address(x));
+    TChannel *c = TChannel::GetChannel(GetAddress(x));
     if (c){
       temp += c->CalEnergy(fData.at(x));
     } else{
@@ -166,8 +77,8 @@ float TIonChamber::GetAve(){
 /*******************************************************************************/
 float TIonChamber::GetSum() const {
   float temp = 0.0;
-  for(int x = 0; x < Size(); x++){
-    TChannel *c = TChannel::GetChannel(Address(x));
+  for(int x = 0; x < GetSize(); x++){
+    TChannel *c = TChannel::GetChannel(GetAddress(x));
     if(c){
       temp += c->CalEnergy(GetData(x));
     } else{
@@ -212,7 +123,6 @@ void TIonChamber::Copy(TObject &obj) const {
   TIonChamber &ic =(TIonChamber&)obj;
   ic.fChan = fChan;
   ic.fData = fData;
-
 }
 
 /*******************************************************************************/
@@ -252,9 +162,10 @@ int TCrdc::GetMaxPad() const {
   float maxd = 0;
   for(unsigned int i = 0; i < data.size(); i++){
     if(!IsGoodSample(i)) {
+std::cout << "BAD SAMPLE" << std::endl;
       continue;
     }
-    TChannel *c = TChannel::GetChannel(Address(i));
+    TChannel *c = TChannel::GetChannel(GetAddress(i));
     double cal_data;
     if(c){
       cal_data = c->CalEnergy(data.at(i));
@@ -301,7 +212,7 @@ int TCrdc::GetMaxPadSum() const{
     if(!IsGoodSample(i)) {
       continue;
     }
-    TChannel *c = TChannel::GetChannel(Address(i));
+    TChannel *c = TChannel::GetChannel(GetAddress(i));
     double cal_data;
     if(c){
       cal_data = c->CalEnergy(data.at(i));
@@ -318,7 +229,7 @@ int TCrdc::GetMaxPadSum() const{
 /* Not Really sure the purpose of this function ********************************/
 /*******************************************************************************/
 int TCrdc::GetWidth() {
-  if(Size()<2)
+  if(GetSize()<2)
     return 0;
   return sample.back()-sample.front()+1;
 }
@@ -335,6 +246,7 @@ void TCrdc::Copy(TObject &obj) const {
   c.data     = data;
   c.anode    = anode;
   c.time     = time;
+  c.fDrifttime = fDrifttime;
 }
 
 /*******************************************************************************/
@@ -345,6 +257,7 @@ void TCrdc::Clear(Option_t *opt) {
   fId   = -1;
   anode = 0;
   time  = 0;
+  fDrifttime = 0;
   channel.clear();
   sample.clear();
   data.clear();
@@ -352,11 +265,11 @@ void TCrdc::Clear(Option_t *opt) {
   cached_dispersive_x = std::sqrt(-1);
 }
 
-
 /*******************************************************************************/
 /* Checks if good sample from digitizer used by GetMaxPad/GetDispersiveX *******/
 /*******************************************************************************/
 bool TCrdc::IsGoodSample(int i) const {
+  return true;
   if (i == 0 && data.size()>1) {
     return channel.at(i) == channel.at(i+1);
   } else if(i == (int)data.size()-1 && data.size()>2) {
@@ -394,6 +307,7 @@ float TCrdc::GetDispersiveX() const{
 
   const int GRAVITY_WIDTH = 14;//determines how many pads one uses in averaging
   const int NUM_PADS = 224;
+//  const int NUM_PADS = 480;
   int lowpad = maxpad - GRAVITY_WIDTH/2;
   int highpad = lowpad + GRAVITY_WIDTH;
   if (lowpad < 0){
@@ -405,12 +319,12 @@ float TCrdc::GetDispersiveX() const{
 
   double datasum = 0;
   double weighted_sum = 0;
-  for(int i=0;i<Size();i++) {
+  for(int i=0;i<GetSize();i++) {
     if((channel.at(i) < lowpad) || (channel.at(i)>highpad) || !IsGoodSample(i)) {
       continue;
     }
 
-    TChannel *c = TChannel::GetChannel(Address(i));
+    TChannel *c = TChannel::GetChannel(GetAddress(i));
     double cal_data;
     if (c){
       cal_data = c->CalEnergy(GetData(i));
@@ -490,12 +404,12 @@ float TCrdc::GetDispersiveX(int maxpad) const{
 
   double datasum = 0;
   double weighted_sum = 0;
-  for(int i = 0; i < Size(); i++) {
+  for(int i = 0; i < GetSize(); i++) {
     if((channel.at(i) < lowpad) || (channel.at(i)>highpad) || !IsGoodSample(i)) {
       continue;
     }
 
-    TChannel *c = TChannel::GetChannel(Address(i));
+    TChannel *c = TChannel::GetChannel(GetAddress(i));
     double cal_data;
     if (c){
       cal_data = c->CalEnergy(GetData(i));
@@ -514,7 +428,6 @@ float TCrdc::GetDispersiveX(int maxpad) const{
   cached_dispersive_x = output;
   return output;
 }
-
 
 /*******************************************************************************/
 /* Calculate Y position of CRDC ************************************************/
@@ -555,58 +468,6 @@ void TCrdc::Print(Option_t *opt) const {
 }
 
 /*******************************************************************************/
-/* TCrdcPad ********************************************************************/
-/* Seems to have no function may be removed at later date **********************/
-/*******************************************************************************/
-TCrdcPad::TCrdcPad()  { Clear(); }
-
-TCrdcPad::TCrdcPad(int chan)  {
-  fChannel = chan;
-  fNumSamples =0;
-  Clear();
-  for(int x=0;x<MAXCRDC;x++)  {
-    fSample[x] = 0;
-    fValue[x]  = 0;
-  }
-}
-
-TCrdcPad::~TCrdcPad() {  }
-
-int TCrdcPad::Charge() const {
-  int temp = 0;
-  //for(std::map<int,int>::iterator it=fTrace.begin();it!=fTrace.end();it++) {
-  for(int x=0;x<fNumSamples;x++)
-    temp += fValue[x];
-  return temp;
-}
-
-void TCrdcPad::Clear(Option_t *opt) {
-
-  fChannel = -1;
-  for(int x=0;x<fNumSamples;x++) {
-    fSample[x] = 0;
-    fValue[x]  = 0;
-  }
-  fNumSamples =0;
-}
-
-void TCrdcPad::Print(Option_t *opt) const {
-  printf("I print.\n");
-}
-
-void TCrdcPad::Copy(TObject &obj) const {
-  TDetectorHit::Copy(obj);
-
-  ((TCrdcPad&)obj).fChannel   = fChannel;
-  ((TCrdcPad&)obj).fNumSamples = fNumSamples;
-  for(int x=0;x<MAXCRDC;x++) {
-    ((TCrdcPad&)obj).fSample[x] = fSample[x];
-    ((TCrdcPad&)obj).fValue[x]  = fValue[x];
-  }
-
-}
-
-/*******************************************************************************/
 /* THodoscope ******************************************************************/
 /* Used to store data from the Hodoscope ***************************************/
 /*******************************************************************************/
@@ -637,8 +498,8 @@ void THodoscope::Clear(Option_t *opt){
 /* Basic Print Function ********************************************************/
 /*******************************************************************************/
 void THodoscope::Print(Option_t *opt) const {
-  printf("Number of Hits: %zu\n",Size());
-  for(unsigned int i=0;i<Size();i++) {
+  printf("Number of Hits: %zu\n",GetSize());
+  for(unsigned int i=0;i<GetSize();i++) {
     printf("\t");
     GetHodoHit(i).Print();
   }
@@ -746,9 +607,6 @@ void TMTof::Clear(Option_t *opt) {
   fRf.clear();
   fHodoscope.clear();
   fRef.clear();
-
-  fCorrelatedXFPE1=sqrt(-1);
-  fCorrelatedOBJE1=sqrt(-1);
 }
 
 
@@ -821,7 +679,6 @@ std::vector<unsigned short> TMTof::GetMTofVector(int channel) const {
       return  fE1Up;
       break;
   }
-
   return fE1Up;
 }
 
@@ -877,65 +734,6 @@ std::vector<unsigned short> TMTof::GetMTofVectorFromString(std::string vecname) 
     std::cout << "Recognised Names: E1Up E1Down Xfp Obj Rf Crdc1 Crdc2 Hodo Ref" << std::endl;
     return  fE1Up;
   }
-}
-
-/*******************************************************************************/
-/* Legacy Function - Replaced by more generic function GetCorrelatedTof() ******/
-/* Corrected ToF between Obj scintillator **************************************/
-/*******************************************************************************/
-double TMTof::GetCorrelatedObjE1() const {
-  double target = GValue::Value("TARGET_MTOF_OBJE1");
-  if (std::isnan(target)){
-    std::cout << "TARGET_MTOF_OBJE1 not defined! Use fObj.at(0) if you want first.\n";
-    fCorrelatedOBJE1 = sqrt(-1);
-    return fCorrelatedOBJE1 = sqrt(-1);
-  }
-
-  //shift allows "shifting" of TOF to line up different runs. Necessary when,
-  //e.g., the voltage on a scintillator changes during an experiment
-  double shift = GValue::Value("SHIFT_MTOF_OBJE1");
-
-  if(fObj.size() && fE1Up.size()){
-    fCorrelatedOBJE1 = std::numeric_limits<double>::max();
-    for(size_t i=0;i<fObj.size();i++) {
-      for (size_t j=0; j < fE1Up.size(); j++){
-        double newvalue = fObj.at(i) - fE1Up.at(j);
-        if (!std::isnan(shift)){
-          newvalue += shift;
-        }
-        if(std::abs(target - newvalue) < std::abs(target - fCorrelatedOBJE1)) {
-          fCorrelatedOBJE1 = newvalue;
-        }
-      }
-    }
-  }
-  return fCorrelatedOBJE1;
-}
-
-/*******************************************************************************/
-/* Legacy Function - Replaced by more generic function GetCorrelatedTof() ******/
-/* Corrected ToF between Obj scintillator **************************************/
-/*******************************************************************************/
-double TMTof::GetCorrelatedXfpE1() const{
-  double target = GValue::Value("TARGET_MTOF_XFPE1");
-  if (std::isnan(target)){
-    std::cout << "TARGET_MTOF_XFPE1 not defined! Use fXfp.at(0) if you want first.\n";
-    fCorrelatedXFPE1 = sqrt(-1);
-    return fCorrelatedXFPE1;
-  }
-
-  if(fXfp.size() && fE1Up.size()){
-    fCorrelatedXFPE1 = std::numeric_limits<double>::max();
-    for(size_t i=0;i<fXfp.size();i++) {
-      for (size_t j=0; j < fE1Up.size(); j++){
-        double newvalue = fXfp.at(i)-fE1Up.at(j);
-        if(std::abs(target - newvalue) < std::abs(target - fCorrelatedXFPE1)) {
-          fCorrelatedXFPE1 = newvalue;
-        }
-      }
-    }
-  }
-  return fCorrelatedXFPE1;
 }
 
 /*******************************************************************************/

@@ -154,8 +154,8 @@ kDetectorSystems TDetectorEnv::DetermineSystem(TRawEvent& event) const {
   }
     break;
 
-  case GRETINA_MODE2:
-  case GRETINA_MODE3:
+  case GRETA_MODE2:
+  case GRETA_MODE3:
   {
     TGEBEvent& geb_event = (TGEBEvent&)event;
     source_id = geb_event.GetEventType();

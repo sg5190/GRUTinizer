@@ -121,7 +121,7 @@ Int_t TRawNSCLScalers::IsIncremental(){
 Int_t TRawNSCLScalers::GetScalerValue(size_t scaler_num){
   assert(scaler_num < size_t(GetScalerCount()));
 
-  return *(Int_t*)(GetPayload() + 24 + 4*scaler_num);
+  return *(Int_t*)(GetPayload() + 28 + 4*scaler_num);
 }
 
 TNSCLFragment::TNSCLFragment(TSmartBuffer& buf){

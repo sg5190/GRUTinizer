@@ -3,7 +3,7 @@
 
 /*******************************************************************************/
 /* TMode3 **********************************************************************/
-/* Contains raw (not decomposed) GRETINA data should not be used for analysis **/
+/* Contains raw (not decomposed) GRETA data should not be used for analysis ****/
 /*******************************************************************************/
 TMode3::TMode3(){
   Clear();
@@ -35,7 +35,7 @@ void TMode3::InsertHit(const TDetectorHit& hit){
 /*******************************************************************************/
 int TMode3::BuildHits(std::vector<TRawEvent>& raw_data){
   if(raw_data.size()<1)
-    return Size();
+    return GetSize();
   long smallest_time = 0x3fffffffffffffff;
   for(auto& event : raw_data){
     if(event.GetTimestamp()<smallest_time)
@@ -48,7 +48,7 @@ int TMode3::BuildHits(std::vector<TRawEvent>& raw_data){
   }
   SetTimestamp(smallest_time);
   std::sort(mode3_hits.begin(),mode3_hits.end());
-  return Size();
+  return GetSize();
 }
 
 /*******************************************************************************/
@@ -58,11 +58,11 @@ void TMode3::Print(Option_t *opt) const {
   TString sopt(opt);
   sopt.ToLower();
 
-  printf("TMode3;  %zu total hits:\n",Size());
-  printf(" @ %lu \n",Timestamp());
+  printf("TMode3;  %zu total hits:\n",GetSize());
+  printf(" @ %lu \n",GetTimestamp());
 
   if(sopt.Contains("all")) {
-    for(size_t i=0;i<Size();i++) {
+    for(size_t i=0;i<GetSize();i++) {
       printf("\t");
       GetMode3Hit(i).Print();
     }

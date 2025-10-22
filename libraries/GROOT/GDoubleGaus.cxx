@@ -243,6 +243,8 @@ void GDoubleGaus::Print(Option_t *opt) const {
   printf("Name: %s \n", this->GetName());
   printf("Centroid1: %1f +/- %1f \n", this->GetParameter("centroid1"),this->GetParError(GetParNumber("centroid1")));
   printf("Centroid2: %1f +/- %1f \n", this->GetParameter("centroid2"),this->GetParError(GetParNumber("centroid2")));
+  printf("Height1: %1f +/- %1f \n", this->GetParameter("height1"),this->GetParError(GetParNumber("height1")));
+  printf("Height2: %1f +/- %1f \n", this->GetParameter("height2"),this->GetParError(GetParNumber("height2")));
   printf("AreaTotal:      %1f +/- %1f \n", fAreaTotal, fDAreaTotal);
   printf("SumTotal:       %1f +/- %1f \n", fSumTotal, fDSumTotal);
   printf("FWHM:      %1f +/- %1f \n",this->GetFWHM(),this->GetFWHMErr());

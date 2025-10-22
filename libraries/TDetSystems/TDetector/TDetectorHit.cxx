@@ -31,6 +31,8 @@ void TDetectorHit::Clear(Option_t *opt) {
   fCharge = -1;
   fTime = -1;
   fTimestamp = -1;
+  fTimestampNs = -1;
+  fCFD = -1;
   fFlags = 0;
 }
 
@@ -51,6 +53,7 @@ void TDetectorHit::Copy(TObject& obj) const {
   hit.fCharge = fCharge;
   hit.fTime = fTime;
   hit.fTimestamp = fTimestamp;
+  hit.fCFD = fCFD;
   hit.fFlags = fFlags;
 }
 
@@ -62,12 +65,13 @@ void TDetectorHit::SetCharge(int charge) {
   fFlags &= ~kIsEnergy;
 }
 
-void TDetectorHit::SetEnergy(double energy) {
+void TDetectorHit::SetEnergy(double energy, bool addback = false) {
   fCharge = energy;
-  fFlags |= kIsEnergy;
+  if(addback) fFlags |= kIsEnergy;
+  else fFlags &= ~kIsEnergy;
 }
 
-Int_t  TDetectorHit::Charge() const {
+Int_t  TDetectorHit::GetCharge() const {
   if(fFlags & kIsEnergy) {
     return 0;
   } else {
@@ -103,13 +107,13 @@ void TDetectorHit::AddEnergy(double eng) {
   SetEnergy(eng + GetEnergy());
 }
 
-double TDetectorHit::GetTime() const {
-  TChannel* chan = TChannel::GetChannel(fAddress);
-  if(!chan){
-    return Time() + gRandom->Uniform();
-  }
-  return chan->CalTime(Time(), fTimestamp);
-}
+//double TDetectorHit::GetTime() const {
+//  TChannel* chan = TChannel::GetChannel(fAddress);
+//  if(!chan){
+//    return GetTime() + gRandom->Uniform();
+//  }
+//  return chan->CalTime(Time(), fTimestamp);
+//}
 
 Int_t TDetectorHit::Compare(const TObject *obj) const {
   const TDetectorHit* other = (const TDetectorHit*)obj;

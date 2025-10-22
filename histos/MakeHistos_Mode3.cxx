@@ -100,7 +100,7 @@ void MakeHistograms(TRuntimeObjects& obj) {
     std::string histname2 = Form("Q%i_detmap_led_2D",hole); ////;channel;Charge/128.",hole);
     obj.FillHistogram(dirname,histname,
                       160,0,160,hit.GetAbsSegId(),
-                      8000,0,64000,hit.Charge());  // int division done in the mode3hit class.
+                      8000,0,64000,hit.GetCharge());  // int division done in the mode3hit class.
 
 // was
                     //  8000,0,32000,hit.Charge());  // int division done in the mode3hit class.
@@ -120,7 +120,7 @@ void MakeHistograms(TRuntimeObjects& obj) {
       histname = Form("Q%i_cores",hole); ////;channel;Charge/128.",hole);
       obj.FillHistogram(dirname,histname,
                         20,0,20,hit.GetCrystal()*4 + hit.GetVME(),
-                        16000,0,64000,hit.Charge());
+                        16000,0,64000,hit.GetCharge());
 
      // histname2 = Form("Q%i_cores_led",hole); ////;channel;Charge/128.",hole);
      // obj.FillHistogram(dirname,histname2,

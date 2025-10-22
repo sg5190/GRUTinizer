@@ -11,6 +11,8 @@
 
 std::map<int,TSega::Transformation> TSega::detector_positions;
 
+#include "chrono"
+using namespace std::chrono;
 /*******************************************************************************/
 /* TSega ***********************************************************************/
 /* Main class for unpacking SeGA in DDAS electronics ***************************/
@@ -51,6 +53,8 @@ TDetectorHit& TSega::GetHit(int i){
 /* Unpacks raw DDAS data and builds TSega events *******************************/
 /*******************************************************************************/
 int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
+//  auto start = high_resolution_clock::now();
+
   long int smallest_timestamp = 0x7fffffffffffffff;
   for(auto& event : raw_data){
     //Get raw data and unpacks it as a DDAS Event (DDASDataFormat.h)
@@ -80,7 +84,7 @@ int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
 	      break;
           }
         } else {
-	  int tdiff = static_cast<int>(ihit.Timestamp()-ddas.GetTimestamp());
+	  int tdiff = static_cast<int>(ihit.GetTimestamp()-ddas.GetTimestamp());
 	  if(tdiff < 2000 && tdiff > -2000) { //Segments should be within 2us of a core
             hit = &ihit;
       	    break;
@@ -102,7 +106,7 @@ int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
       hit->SetTime(ddas.GetTime()); // Timestamp + CFD
       hit->SetCFDTime(ddas.GetCFDTime()); // CFD ONLY
       hit->SetCFDFail(ddas.GetCFDFailBit());
-      if(hit->Timestamp()<smallest_timestamp) { smallest_timestamp = hit->Timestamp(); }
+      if(hit->GetTimestamp()<smallest_timestamp) { smallest_timestamp = hit->GetTimestamp(); }
       hit->SetCharge(ddas.GetEnergy());
       hit->SetTrace(ddas.GetTraceLength(), ddas.trace);
       //For checking Trapezoidal filter output in DDAS, unlikely to be useful for mosr people
@@ -129,7 +133,10 @@ int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
   //set the TSeGA  time....
   SetTimestamp(smallest_timestamp);  //fix me pcb
 
-  return Size();
+//  auto stop = high_resolution_clock::now();
+//  auto duration = duration_cast<nanoseconds>(stop - start);
+//  std::cout << "Time taken by Fast function: " << duration.count() << " microseconds" << std::endl;
+  return GetSize();
 }
 
 /*******************************************************************************/
@@ -227,32 +234,11 @@ void TSega::InsertHit(const TDetectorHit& hit) {
   fSize++;
 }
 
-
-/*******************************************************************************/
-/* Specific to a single experiment *********************************************/
-/* Will be modified to be more general or will be removed **********************/
-/*******************************************************************************/
-void TSega::SetRunStart(unsigned int unix_time) {
-  // Only adjust times for production runs in e13701.
-  if(unix_time < 1453953420 || unix_time > 1454425200) {
-    return;
-  }
-
-  // Wed Jan 27 22:57:09 2016
-  unsigned int previous = fRunStart==0 ? 1453953429 : fRunStart;
-  int tdiff = unix_time - previous;
-  long timestamp_diff = (1e9) * tdiff;
-  fTimestamp += timestamp_diff;
-  for(auto& hit : sega_hits) {
-    hit.SetTimestamp(timestamp_diff + hit.Timestamp());
-  }
-}
-
 /*******************************************************************************/
 /* Required by TDetectorFactory ************************************************/
 /*******************************************************************************/
 void TSega::SortHitsByTimestamp() {
   std::sort(sega_hits.begin(), sega_hits.end(),	[](const TSegaHit& a, const TSegaHit& b) {
-    return a.Timestamp() < b.Timestamp();
+    return a.GetTimestamp() < b.GetTimestamp();
   });
 }

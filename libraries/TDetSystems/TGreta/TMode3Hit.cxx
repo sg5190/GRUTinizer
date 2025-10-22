@@ -118,7 +118,7 @@ double TMode3Hit::AverageWave(int samples) const {
 /*******************************************************************************/
 double TMode3Hit::GetEnergy0() const {
   double energy;
-  TChannel* chan = TChannel::GetChannel(Address());
+  TChannel* chan = TChannel::GetChannel(GetAddress());
   if(!chan){
     energy = charge0/128 + gRandom->Uniform();
     //return Charge() + gRandom->Uniform();
@@ -130,7 +130,7 @@ double TMode3Hit::GetEnergy0() const {
 
 double TMode3Hit::GetEnergy1() const {
   double energy;
-  TChannel* chan = TChannel::GetChannel(Address());
+  TChannel* chan = TChannel::GetChannel(GetAddress());
   if(!chan){
     energy = charge1/128 + gRandom->Uniform();
     //return Charge() + gRandom->Uniform();
@@ -142,7 +142,7 @@ double TMode3Hit::GetEnergy1() const {
 
 double TMode3Hit::GetEnergy2() const {
   double energy;
-  TChannel* chan = TChannel::GetChannel(Address());
+  TChannel* chan = TChannel::GetChannel(GetAddress());
   if(!chan){
     energy = charge2/128 + gRandom->Uniform();
     //return Charge() + gRandom->Uniform();

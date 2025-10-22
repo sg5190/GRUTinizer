@@ -30,6 +30,7 @@ public:
 
   static TVector3 GetPosition(int ring, int sector, double zoffset, bool sectorsdownstream, bool smear = false);
 
+  void ResetJanus() { janus_hits.clear();}
   Int_t GetJanusSize();
   void BuildJanusHit();
 
@@ -37,11 +38,11 @@ public:
   void SetAddback(bool set = false) { Addback = set; }    //Addback of Rings/Sectors
   void SetEnergyBuild(bool set = false) { EBuild = set; } //Build hits according to calibrated Energy or Raw Charge
 
-  void SetUpChargeThresh(double charge) { UThresh = charge; } //Charge Threshold for building TJanusHit
-  void SetDownChargeThresh(double charge) { DThresh = charge; } //Charge Threshold for building TJanusHit
-  void SetFrontBackTime(int time)     { TDiff = time; }	   //Time diff between ring/sector hits and addback
-  void SetFrontBackEnergy(double en)  { EWin = en; }	   //Energy ratio of ring/sector hits
-
+  void SetUpChargeThresh(double charge) { UThresh = charge; }  //Charge Threshold for building TJanusHit
+  void SetDownChargeThresh(double charge) { DThresh = charge; }//Charge Threshold for building TJanusHit
+  void SetFrontBackTime(int time)     { TDiff = time; }	       //Time diff between ring/sector hits and addback
+  void SetFrontBackEnergy(double en)  { EWin = en; }	       //Energy ratio of ring/sector hits
+  void SetDiagnostics(bool enable)    { Diagnostics = enable; }  //Enable build hit diagnostics
 
   char StackTriggered() const { return stack_triggered; }
   int NumPackets() const { return num_packets; }
@@ -87,6 +88,8 @@ private:
   static bool Multihit;
   //Build hits using Calibrated Energies or raw charge
   static bool EBuild;
+  //Enable diagnostics for checking hit build
+  static bool Diagnostics;
   ClassDef(TJanus,3);
 };
 

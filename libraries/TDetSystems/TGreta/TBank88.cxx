@@ -44,10 +44,10 @@ int TBank88::BuildHits(std::vector<TRawEvent>& raw_data){
     hit.BuildFrom(buf);
     InsertHit(hit);
   }
-  if(Size()) {
+  if(GetSize()) {
     SetTimestamp(channels.at(0).GetLed());
   }
-  return Size();
+  return GetSize();
 }
 
 /*******************************************************************************/

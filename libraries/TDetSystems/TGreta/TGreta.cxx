@@ -4,27 +4,27 @@
 #include <sstream>
 #include <set>
 
-#include "TGretina.h"
+#include "TGreta.h"
 #include "TGEBEvent.h"
 
 /*******************************************************************************/
-/* TGretina ********************************************************************/
-/* Main Class for Gretina mode2 (Decomposed) analysis **************************/
+/* TGreta **********************************************************************/
+/* Main Class for Greta mode2 (Decomposed) analysis ****************************/
 /*******************************************************************************/
-TGretina::TGretina(){
+TGreta::TGreta(){
   Clear();
 }
 
-TGretina::~TGretina() {
+TGreta::~TGreta() {
 }
 
-Float_t TGretina::crmat[32][4][4][4];
-Float_t TGretina::m_segpos[2][36][3];
-bool    TGretina::fCRMATSet = false;
-bool    TGretina::fNEIGHBOURSet = false;
-bool	TGretina::gretNeighbour[124][124];
-std::map<int, int> TGretina::fThetaCryMap;
-bool    TGretina::fSetSpec = false;
+Float_t TGreta::crmat[32][4][4][4];
+Float_t TGreta::m_segpos[2][36][3];
+bool    TGreta::fCRMATSet = false;
+bool    TGreta::fNEIGHBOURSet = false;
+bool	TGreta::gretNeighbour[124][124];
+std::map<int, int> TGreta::fThetaCryMap;
+bool    TGreta::fSetSpec = false;
 
 /*******************************************************************************/
 /* Main function for making addback hits according to procedure defined in *****/
@@ -35,24 +35,20 @@ bool    TGretina::fSetSpec = false;
 /*******************************************************************************/
 //SG TO DO
 //How to handle interaction points from added crystals, does it make sense to add them?
-void TGretina::BuildAddback(int SortDepth, int EngRange) const {
+void TGreta::BuildAddback(int SortDepth, bool AllHits) const {
   //Don't rebuild events
-  if( addback_hits.size() > 0 || gretina_hits.size() == 0) {
+  if( addback_hits.size() > 0 || greta_hits.size() == 0) {
     return;
   }
 
-  std::vector<TGretinaHit> temp_hits = gretina_hits;
-  for(unsigned int i = 0; i < temp_hits.size(); i++) {
-    if(EngRange < 0) temp_hits.at(i).SetCoreEnergy(temp_hits.at(i).GetCoreEnergy());
-    else temp_hits.at(i).SetCoreEnergy(temp_hits.at(i).GetCoreEnergy(EngRange));
-  }
+  std::vector<TGretaHit> temp_hits = greta_hits;
 
   //sort so that the first hit has the greatest energy
   //this way we can loop through i,j with i < j and know that
   //any hit with higher energy cannot be an addback to one with lower energy
   std::sort(temp_hits.begin(), temp_hits.end(),
-    [](const TGretinaHit& a, const TGretinaHit& b) {
-    return a.GetCoreEnergy() > b.GetCoreEnergy();
+    [](const TGretaHit& a, const TGretaHit& b) {
+    return a.GetEnergy() > b.GetEnergy();
   });
 
   //vector used to store hit indices when crystals are pairs
@@ -60,7 +56,7 @@ void TGretina::BuildAddback(int SortDepth, int EngRange) const {
   //loop through every hit
   for(unsigned int i=0; i < temp_hits.size(); i++) {
     paired.clear();
-    TGretinaHit &current_hit = temp_hits[i];
+    TGretaHit &current_hit = temp_hits[i];
     //only pick unqiue pairs of hits
     if(SortDepth > 1) {
       for(unsigned int j=i+1; j < temp_hits.size(); j++) {
@@ -68,25 +64,25 @@ void TGretina::BuildAddback(int SortDepth, int EngRange) const {
 	  paired.push_back(j);
           //check every hit k to see if it is a neighbour with j
 	  if(SortDepth > 2) {
-            for (unsigned int k=0; k < temp_hits.size(); k++){
+            for (unsigned int k=i; k < temp_hits.size(); k++){
 	      if( (i == k) || (j == k) ) continue;
               if (IsNeighbour(temp_hits[j],temp_hits[k])){
 	        paired.push_back(k);
 	        //Edge cases, requires at least 4 crystals in a line
 	        if(SortDepth > 3) {
-	          for (unsigned int l=0; l < temp_hits.size(); l++){
+	          for (unsigned int l=i; l < temp_hits.size(); l++){
                     if( (i == l) || (j == l) || (k == l)) continue;
 	            if (IsNeighbour(temp_hits[k],temp_hits[l])) {
 		      paired.push_back(l);
  	              //Really Edge cases, requires at least 5 crystals in a line
 		      if(SortDepth > 4) {
-	                for (unsigned int m=0; m < temp_hits.size(); m++){
+	                for (unsigned int m=i; m < temp_hits.size(); m++){
 		          if( (i == m) || (j == m) || (k == m) || (l == m)) continue;
 	                  if(IsNeighbour(temp_hits[l],temp_hits[m])) {
 		            paired.push_back(m);
  	                    //Extreme Edge cases, requires at least 6 crystals in a line
 			    if(SortDepth > 5) {
-                              for (unsigned int n=0; n < temp_hits.size(); n++){
+                              for (unsigned int n=i; n < temp_hits.size(); n++){
                                 if( (i == n) || (j == n) || (k == n) || (l == n) || (m == n)) continue;
                                 if(IsNeighbour(temp_hits[m],temp_hits[n])) paired.push_back(n);
 			      }
@@ -122,31 +118,41 @@ void TGretina::BuildAddback(int SortDepth, int EngRange) const {
       if(IsNeighbour(current_hit,temp_hits[paired.at(0)]) && IsNeighbour(current_hit,temp_hits[paired.at(1)]) && IsNeighbour(temp_hits[paired.at(0)],temp_hits[paired.at(1)]) ) { //n2
         current_hit.NNAdd(temp_hits[paired.at(1)]);
         current_hit.NNAdd(temp_hits[paired.at(0)]);
-        addback_hits.push_back(current_hit);
-        addback_hits.back().SetABDepth(2);
+	if(AllHits) {
+          addback_hits.push_back(current_hit);
+          addback_hits.back().SetABDepth(2);
+	}
         //Erase hit after adding otherwise event can make a new addback event
         temp_hits.erase(temp_hits.begin() + paired.at(0));
         temp_hits.erase(temp_hits.begin() + paired.at(1));
       } else { //Also ng
+          if(AllHits) {
+            addback_hits.push_back(current_hit);
+            addback_hits.back().SetABDepth(3);
+	  }
+          for(int p = 0; p < (int)paired.size(); p++) {
+            if(AllHits) {
+              addback_hits.push_back(temp_hits[paired.at(p)]);
+              addback_hits.back().SetABDepth(3);
+	    }
+            //Erase hit after adding otherwise event can make a new addback event
+            temp_hits.erase(temp_hits.begin() + paired.at(p));
+          }
+        }
+      } else { //ng
+        if(AllHits) {
           addback_hits.push_back(current_hit);
           addback_hits.back().SetABDepth(3);
-          for(int p = 0; p < (int)paired.size(); p++) {
-          addback_hits.push_back(temp_hits[paired.at(p)]);
-          addback_hits.back().SetABDepth(3);
+	}
+        for(int p = 0; p < (int)paired.size(); p++) {
+	  if(AllHits) {
+            addback_hits.push_back(temp_hits[paired.at(p)]);
+            addback_hits.back().SetABDepth(3);
+	  }
           //Erase hit after adding otherwise event can make a new addback event
           temp_hits.erase(temp_hits.begin() + paired.at(p));
         }
-      }
-    } else { //ng
-      addback_hits.push_back(current_hit);
-      addback_hits.back().SetABDepth(3);
-      for(int p = 0; p < (int)paired.size(); p++) {
-        addback_hits.push_back(temp_hits[paired.at(p)]);
-        addback_hits.back().SetABDepth(3);
-        //Erase hit after adding otherwise event can make a new addback event
-        temp_hits.erase(temp_hits.begin() + paired.at(p));
-      }
-    }
+     }
   }
 
   return;
@@ -155,14 +161,14 @@ void TGretina::BuildAddback(int SortDepth, int EngRange) const {
 /*******************************************************************************/
 /* Loads files containing rotation matrices of core required for position ******/
 /*******************************************************************************/
-void TGretina::SetCRMAT() {
+void TGreta::SetCRMAT() {
   if(fCRMATSet){
     return;
   }
 
   FILE *fp;
   std::string temp = getenv("GRUTSYS");
-  temp.append("/libraries/TDetSystems/TGretina/crmat.dat");
+  temp.append("/libraries/TDetSystems/TGreta/crmat.dat");
   const char *fn = temp.c_str();
   float f1, f2, f3, f4;
   int pos, xtal;
@@ -209,13 +215,13 @@ void TGretina::SetCRMAT() {
 /* Loads Segment Positions - Typically unused as position is derived from ******/
 /* interaction points **********************************************************/
 /*******************************************************************************/
-void TGretina::SetSegmentCRMAT() {
+void TGreta::SetSegmentCRMAT() {
   if(fCRMATSet)
     return;
   //FILE *infile;
   int NUMSEG = 36;
   std::string temp = getenv("GRUTSYS");
-  temp.append("/libraries/TDetSystems/TGretina/crmat_segpos.dat");
+  temp.append("/libraries/TDetSystems/TGreta/crmat_segpos.dat");
   std::ifstream infile;
   infile.open(temp.c_str());
   if(!infile.is_open()) {
@@ -250,7 +256,7 @@ void TGretina::SetSegmentCRMAT() {
 /*******************************************************************************/
 /* Gets Actual Position of Segment *********************************************/
 /*******************************************************************************/
-TVector3 TGretina::GetSegmentPosition(int cry_id,int segment) {
+TVector3 TGreta::GetSegmentPosition(int cry_id,int segment) {
   SetCRMAT();
   float x = m_segpos[cry_id%2][segment][0];
   float y = m_segpos[cry_id%2][segment][1];
@@ -271,15 +277,15 @@ TVector3 TGretina::GetSegmentPosition(int cry_id,int segment) {
   return CrystalToGlobal(cry_id,v.X(),v.Y(),v.Z());
 }
 /*******************************************************************************/
-/* Defines which Gretina crystals are Neighbours used for Addback **************/
+/* Defines which Greta crystals are Neighbours used for Addback ****************/
 /*******************************************************************************/
-void TGretina::SetGretNeighbours() {
+void TGreta::SetGretNeighbours() {
   if(fNEIGHBOURSet){
     return;
   }
 
   std::string temp = getenv("GRUTSYS");
-  temp.append("/libraries/TDetSystems/TGretina/gretina-pairs.dat");
+  temp.append("/libraries/TDetSystems/TGreta/greta-pairs.dat");
   std::ifstream infile;
   infile.open(temp.c_str());
   if(!infile.is_open()) {
@@ -305,7 +311,7 @@ void TGretina::SetGretNeighbours() {
 /*******************************************************************************/
 /* Returns vector for lab position of the centre of the crystal ****************/
 /*******************************************************************************/
-TVector3 TGretina::GetCrystalPosition(int cry_id) {
+TVector3 TGreta::GetCrystalPosition(int cry_id) {
   SetCRMAT();
 
   TVector3 v;
@@ -321,46 +327,46 @@ TVector3 TGretina::GetCrystalPosition(int cry_id) {
 /*******************************************************************************/
 /* Copies hit ******************************************************************/
 /*******************************************************************************/
-void TGretina::Copy(TObject& obj) const {
+void TGreta::Copy(TObject& obj) const {
   TDetector::Copy(obj);
 
-  TGretina& gretina = (TGretina&)obj;
-  gretina.gretina_hits = gretina_hits;
+  TGreta& greta = (TGreta&)obj;
+  greta.greta_hits = greta_hits;
 }
 
 /*******************************************************************************/
-/* Inserts Hit into TGretinaHit vector Copies hit ******************************/
+/* Inserts Hit into TGretaHit vector Copies hit ******************************/
 /*******************************************************************************/
-void TGretina::InsertHit(const TDetectorHit& hit){
-  gretina_hits.emplace_back((TGretinaHit&)hit);
+void TGreta::InsertHit(const TDetectorHit& hit){
+  greta_hits.emplace_back((TGretaHit&)hit);
   fSize++;
 }
 
 /*******************************************************************************/
-/* Unpacks GEB data and builds TGretinaHit *************************************/
+/* Unpacks GEB data and builds TGretaHit *************************************/
 /*******************************************************************************/
-int TGretina::BuildHits(std::vector<TRawEvent>& raw_data){
+int TGreta::BuildHits(std::vector<TRawEvent>& raw_data){
   if(raw_data.size()<1)
-    return Size();
+    return GetSize();
   long smallest_time = 0x3fffffffffffffff;
 
   for(auto& event : raw_data){
     if(event.GetTimestamp()<smallest_time) smallest_time = event.GetTimestamp();
-    TGretinaHit hit;
+    TGretaHit hit;
     TSmartBuffer buf = event.GetPayloadBuffer();
     hit.BuildFrom(buf);
     if(hit.GetPad() == 2 || hit.GetPad() == 3 || hit.GetPad() == 4 || hit.GetPad() == 6) continue;
     InsertHit(hit);
   }
   SetTimestamp(smallest_time);
-  return Size();
+  return GetSize();
 }
 
 /*******************************************************************************/
 /* Converts Local Hit Position To Global Position ******************************/
 /* x,y,z must be in cm *********************************************************/
 /*******************************************************************************/
-TVector3 TGretina::CrystalToGlobal(int cryId,Float_t x,Float_t y,Float_t z) {
+TVector3 TGreta::CrystalToGlobal(int cryId,Float_t x,Float_t y,Float_t z) {
   SetCRMAT();
 
   Int_t detectorPosition = cryId/4 - 1;
@@ -387,11 +393,11 @@ TVector3 TGretina::CrystalToGlobal(int cryId,Float_t x,Float_t y,Float_t z) {
 /*******************************************************************************/
 /* Basic Print Function ********************************************************/
 /*******************************************************************************/
-void TGretina::Print(Option_t *opt) const {
-  printf(BLUE "GRETINA: size = %i" RESET_COLOR "\n",(int)Size());
-  for(unsigned int x=0;x<Size();x++) {
+void TGreta::Print(Option_t *opt) const {
+  printf(BLUE "GRETA: size = %i" RESET_COLOR "\n",(int)GetSize());
+  for(unsigned int x=0;x<GetSize();x++) {
     printf(DYELLOW);
-    GetGretinaHit(x).Print(opt);
+    GetGretaHit(x).Print(opt);
     printf(RESET_COLOR);
   }
   printf(BLUE "--------------------------------" RESET_COLOR "\n");
@@ -400,26 +406,26 @@ void TGretina::Print(Option_t *opt) const {
 /*******************************************************************************/
 /* Sorts Hits by energy ********************************************************/
 /*******************************************************************************/
-void TGretina::SortHits() {
-  std::sort(gretina_hits.begin(),gretina_hits.end());
+void TGreta::SortHits() {
+  std::sort(greta_hits.begin(),greta_hits.end());
 }
 
 /*******************************************************************************/
 /* Clears Hits *****************************************************************/
 /*******************************************************************************/
-void TGretina::Clear(Option_t *opt) {
+void TGreta::Clear(Option_t *opt) {
   TDetector::Clear(opt);
-  gretina_hits.clear();
+  greta_hits.clear();
   addback_hits.clear();
 }
 
 
 /*******************************************************************************/
-/* Called by TGretinaHit::GetSpecOrder *****************************************/
+/* Called by TGretaHit::GetSpecOrder *****************************************/
 /* Creates a map of crystals in theta/phi order and returns this order for *****/
 /* given crystal id ************************************************************/
 /*******************************************************************************/
-int TGretina::GetSpecId(int cry_id, bool inverse) {
+int TGreta::GetSpecId(int cry_id, bool inverse) {
   SetSpecId();
   if(!inverse) {
     if(fThetaCryMap.find(cry_id) == fThetaCryMap.end()) return -1;
@@ -436,7 +442,7 @@ int TGretina::GetSpecId(int cry_id, bool inverse) {
 /* Uses the channel.cal file to determine which crystals are present and sorts */
 /* them in order of Theta/Phi **************************************************/
 /*******************************************************************************/
-void TGretina::SetSpecId() {
+void TGreta::SetSpecId() {
   if(fSetSpec) {
     return;
   }
@@ -445,7 +451,7 @@ void TGretina::SetSpecId() {
   for(auto const& it:  TChannel::fChannelMap) {
     if((strcmp(it.second->GetSystem(), "GRR") == 0) && (strcmp(it.second->GetCollectedCharge(), "N") == 0)) {
       int cryid = 4*((it.first & 0x1F00) >> 8) + ((it.first & 0x00C0) >> 6);
-      TVector3 vec = TGretina::GetCrystalPosition(cryid);
+      TVector3 vec = TGreta::GetCrystalPosition(cryid);
       crymap.push_back(std::make_pair(cryid, vec));
     }
   }

@@ -128,9 +128,9 @@ void TWriteLoop::AddBranch(TClass* cls){
     //   When TTree::Fill is called, it calls TBranch::Fill for each
     // branch, then increments the number of entries.  We may be
     // adding branches after other branches have already been filled.
-    // If the S800 branch has been filled 100 times before the Gretina
+    // If the S800 branch has been filled 100 times before the Greta
     // branch is created, then the next call to TTree::Fill will fill
-    // entry 101 of S800, but entry 1 of Gretina, rather than entry
+    // entry 101 of S800, but entry 1 of Greta, rather than entry
     // 101 of both.
     //   Therefore, we need to fill the new branch as many times as
     // TTree::Fill has been called before.

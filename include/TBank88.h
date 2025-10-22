@@ -24,9 +24,6 @@ public:
   virtual TDetectorHit& GetHit(int i)        { return channels.at(i); }
   virtual TMode3Hit&    GetMode3Hit(int i)   { return channels.at(i); }
 
-  Long_t GetTimestamp() { return Timestamp(); }
-    //if(Size()>0) return ((TMode3Hit&)GetHit(0)).GetTimestamp(); else return -1; }
-
 private:
   virtual int BuildHits(std::vector<TRawEvent>& raw_data);
   std::vector<TMode3Hit> channels;

@@ -44,7 +44,7 @@ void TFastScint::Clear(Option_t* opt){
 }
 
 void TFastScint::Print(Option_t *opt) const {
-  printf("TFastScint @  %lu \n",Timestamp());
+  printf("TFastScint @  %lu \n",GetTimestamp());
   for(unsigned int x=0;x<Size();x++) {
     printf("\t");
     GetLaBrHit(static_cast<int>(x)).Print();
@@ -76,7 +76,7 @@ void TFastScint::InsertHit(const TDetectorHit& hit){
 int TFastScint::GoodSize() const {
   int size=0;
   for(unsigned int i =0;i<Size();i++) {
-    if(fs_hits[i].Charge()>100)
+    if(fs_hits[i].GetCharge()>100)
       size++;
   }
   return size; // fs_hits.size(); //->GetEntries();
@@ -98,7 +98,7 @@ int TFastScint::GetDetNumberIn_fs_hits(Int_t det){
 
 TFastScintHit *TFastScint::FindHit(int address) {
   for(unsigned int i=0;i<Size();i++) {
-    if(fs_hits.at(i).Address()==address)
+    if(fs_hits.at(i).GetAddress()==address)
       return &fs_hits[i];
   }
 
@@ -137,6 +137,7 @@ int TFastScint::Build_From(TRawEvent &event){
   //Zero_Suppress = false;
   bool isQ = false;
   bool isT = false;
+  bool isD = false;
 
   Int_t words_processed = 0;
   //Int_t detNumber = -1;
@@ -152,24 +153,25 @@ int TFastScint::Build_From(TRawEvent &event){
 
   // NOTE -> buffer_size is 2*PayloadSize.
   // UShort_t buffer_size = *((UShort_t*)(data));
-  data+=2;
 
+  data+=2;
   for(Int_t i = 0; i <PayloadSize; i++ ){
     const TRawEvent::Mesy_Word* Mword = (TRawEvent::Mesy_Word*)data;
     data+=sizeof(TRawEvent::Mesy_Word); words_processed++;
     if(Mword->isHeader()){ // Header
       const TRawEvent::Mesy_Header* Mhead = (TRawEvent::Mesy_Header*)Mword;
       if(Mhead->isQDC()){
-        isQ = true; isT = false;
+        isQ = true; isT = false; isD = false;
+      } else if(Mhead->isTDC()){
+        isQ = false; isT = true; isD = false;
+      } else if(Mhead->isMDPP()){
+        isQ = false; isT = false; isD = true;
       }
-      else if(Mhead->isTDC()){
-        isQ = false; isT = true;
-      }
-     // else std::cout << " *** Error -- Not QDC or TDC *** " << std::endl;
+//      else std::cout << " *** Error -- Not QDC or TDC *** " << std::endl;
 
     } else if(Mword->isData()){ // Data
       // Both qdc and tdc have channel in same spot, and I want the channel now
-      unsigned int address = (12<<28) + ((TRawEvent::M_QDC_Data*)(Mword))->Chan();
+      unsigned int address = (12<<24) + ((TRawEvent::M_QDC_Data*)(Mword))->Chan();
       TFastScintHit *hit = FindHit(address);
       if(isQ){ // QDC:
         // NOTE -> we do it this way bc QDC should always come first!!!!
@@ -187,8 +189,28 @@ int TFastScint::Build_From(TRawEvent &event){
 	}
 
 	const int s800_reference_channel = (12<<28) + 31;
-	if(hit->Address() == s800_reference_channel){
+	if(hit->GetAddress() == s800_reference_channel){
 	  SetRefTime(Mt->Time());  //hit->Time());
+	}
+      } else if(isD) {
+        const TRawEvent::M_DPP_Data* Md = (TRawEvent::M_DPP_Data*)Mword;
+	switch(Md->DataType()) {
+	  case 0: //ADC Long Integration Value
+            hit->SetCharge(Md->Data());
+	    break;
+	  case 1: //TDC Time Differenc
+	    hit->SetTime(Md->Data());
+	    break;
+	  case 2: //Trigger Time Difference
+//	    std::cout << "Trigger Time" << Md->AbsChan() << " " << Md->Chan() << " " << Md->Data() << std::endl;
+	    break;
+	  case 3: //ADC Short Integration Value
+//            hit->SetCharge(Md->Data());
+//	    std::cout << "ADC Short " << Md->AbsChan() << " " << Md->Chan() << " " << Md->Data() << std::endl;
+	    break;
+	  default:
+	    std::cout << "Unknown Data Type " << Md->DataType() << std::endl;
+	    break;
 	}
       }
     } else if(Mword->isETS()){
@@ -202,6 +224,7 @@ int TFastScint::Build_From(TRawEvent &event){
       }
     }
   }
+//  data+=1;
 
   //if(Zero_Suppress) {
   //  std::vector<TFastScintHit>::iterator it;

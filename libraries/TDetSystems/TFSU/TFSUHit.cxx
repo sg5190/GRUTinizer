@@ -14,18 +14,18 @@ void TFSUHit::Clear(Option_t *opt) {
 void TFSUHit::Print(Option_t *opt) const {
 
   printf("---------------------------\n");
-  printf("TFSUHit @ %lu\n",Timestamp());
-  printf("\tAddress:  0x%08x\n",Address());
+  printf("TFSUHit @ %lu\n",GetTimestamp());
+  printf("\tAddress:  0x%08x\n",GetAddress());
   printf("Name:       %s\n",GetName());
-  printf("\tCharge:   %i\n",Charge());
-  printf("\tTime:     %f\n",Time());
+  printf("\tCharge:   %i\n",GetCharge());
+  printf("\tTime:     %f\n",GetTime());
   GetPosition().Print();
   printf("---------------------------\n");
  }
 
 
 TVector3 TFSUHit::GetPosition() const {
-  TChannel *chan = TChannel::GetChannel(Address());
+  TChannel *chan = TChannel::GetChannel(GetAddress());
   if(chan) return  TVector3(0,0,1);
   return TVector3(0,0,1);
 }

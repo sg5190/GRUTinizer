@@ -12,7 +12,7 @@ class TFastScintHit : public TDetectorHit {
     virtual void Clear(Option_t* opt = "");
     virtual void Copy(TObject& obj) const;
 
-    int  GetChannel()    const { return Address() & 0x1f;   }
+    int  GetChannel()    const { return GetAddress() & 0x1f;   }
 
     TVector3 &GetPosition() const;
 
@@ -36,7 +36,7 @@ class TFastScintHit : public TDetectorHit {
     }
 
 
-    bool operator<(const TFastScintHit &rhs) const { return Charge()>rhs.Charge(); } //  fAddress<rhs.fAddress; }
+    bool operator<(const TFastScintHit &rhs) const { return GetCharge()>rhs.GetCharge(); } //  fAddress<rhs.fAddress; }
 
   private:
 

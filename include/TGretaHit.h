@@ -14,8 +14,8 @@
 #define MAXHPGESEGMENTS 36
 
 class TSmartBuffer;
-class TS800;
 
+/*
 class TInteractionPoint {
   public:
     TInteractionPoint() { }
@@ -62,7 +62,7 @@ class TInteractionPoint {
   ClassDef(TInteractionPoint,1)
 
 };
-
+*/
 class interaction_point {
   public:
   interaction_point():fSeg(-1),fX(sqrt(-1)),fY(sqrt(-1)),fZ(sqrt(-1)),fEng(sqrt(-1)),fFrac(sqrt(-1)) { }
@@ -109,19 +109,19 @@ struct intpnt_compare_wedge {
 
 #endif
 
-class TGretinaHit : public TDetectorHit {
+class TGretaHit : public TDetectorHit {
 
 public:
-  TGretinaHit();
-  TGretinaHit(const TGretinaHit& hit){ hit.Copy(*this); };
-  ~TGretinaHit();
+  TGretaHit();
+  TGretaHit(const TGretaHit& hit){ hit.Copy(*this); };
+  ~TGretaHit();
 
   void Copy(TObject& obj) const;
 
   void BuildFrom(TSmartBuffer& raw);
 
 
-  Double_t GetTime()             const { return ((double)Timestamp() + (double)fWalkCorrection)*10.; } //Return Time in ns
+  Double_t GetTime()             const { return ((double)GetTimestamp() + (double)fWalkCorrection)*10.; } //Return Time in ns
   Float_t  GetT0()               const { return fWalkCorrection; }
   Float_t  GetTFit()             const { return fWalkCorrection - fTOffset; }
   Float_t  GetTOffset()          const { return fTOffset; }
@@ -148,8 +148,6 @@ public:
   void  Print(Option_t *opt="") const;
   void  Clear(Option_t *opt="");
 
-  Int_t Size()  const { return fSegments.size();  }
-
   double GetX() const { return GetPosition().X(); }
   double GetY() const { return GetPosition().Y(); }
   double GetZ() const { return GetPosition().Z(); }
@@ -169,7 +167,7 @@ public:
   double GetThetaDeg() const { return GetTheta()*TMath::RadToDeg(); }
 
   Int_t Compare(const TObject *obj) const {
-    TGretinaHit *other = (TGretinaHit*)obj;
+    TGretaHit *other = (TGretaHit*)obj;
     if(this->GetCoreEnergy()>other->GetCoreEnergy())
       return -1;
     else if(this->GetCoreEnergy()<other->GetCoreEnergy())
@@ -179,7 +177,7 @@ public:
 
   bool HasInteractions() { return !fSegments.empty(); }
 
-  bool operator<(const TGretinaHit &rhs) const { return fCoreEnergy > rhs.fCoreEnergy; }
+  bool operator<(const TGretaHit &rhs) const { return fCoreEnergy > rhs.fCoreEnergy; }
 
   double GetDoppler(double beta,const TVector3 *vec=0,int EngRange=-1) const;
 
@@ -204,7 +202,7 @@ public:
   void SetSmear(bool smear)	    const { fSmear = smear; }
   TVector3 GetCrystalPosition()           const;
 
-  void NNAdd(const TGretinaHit& other);
+  void NNAdd(const TGretaHit& other);
   void SetCoreEnergy(float temp) const { fCoreEnergy = temp; }
   void SetABDepth(int ab) const { fAB = ab; }
   void TrimSegments(int type); // 0: drop multiple ident int pnts.  1: make into wedge "data"
@@ -217,11 +215,11 @@ private:
   Int_t     type;       // endiness identifier; droppped.
   Int_t     crystal_id; //                                      -> TGreintaHit.fCrystalId
   Int_t     num;        // number of interactions of error code -> TGreintaHit.fNumberOfINteractions
-  Float_t   tot_e;      // energy used for decomp               -> TGretinaHit.fCoreEnergy
-  Int_t     core_e[4];  // charge reported at dig for each gain -> TGretinaHit.fCoreCharge[4]
+  Float_t   tot_e;      // energy used for decomp               -> TGretaHit.fCoreEnergy
+  Int_t     core_e[4];  // charge reported at dig for each gain -> TGretaHit.fCoreCharge[4]
   Long_t    timestamp;  // timestamp for the hit                -> TDetectorHit.fTimestamp
   Long_t    trig_time;  // currently unsed (?)
-  Float_t   t0;         // rise time as reported by decomp      -> TGretinaHit.fWalkCorrectrion
+  Float_t   t0;         // rise time as reported by decomp      -> TGretaHit.fWalkCorrectrion
   Float_t   cfd;        // cfd as reported by the dig.          -> TDetectorHit.fTime
   Float_t   chisq;      // chisq value reported by decomp
   Float_t   norm_chisq; //
@@ -246,12 +244,12 @@ private:
   Float_t	  fPoststep;
   Float_t	  fPrestep;
 
-  std::vector<TGretinaHit> fSingles;
+  std::vector<TGretaHit> fSingles;
   bool fSetFirstSingles = false;
   std::vector<interaction_point> fSegments;
   static double fSmearWidth;
   static bool fSmear;
-  ClassDef(TGretinaHit,5)
+  ClassDef(TGretaHit,5)
 };
 
 

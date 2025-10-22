@@ -21,8 +21,6 @@ public:
 
   void SortHitsByTimestamp();
 
-  virtual void SetRunStart(unsigned int unix_time);
-
   static TVector3 GetSegmentPosition(int detnum, int segnum);
 
   //Geometric (Theta-Phi) Segment Maps

@@ -57,11 +57,11 @@ TDetectorHit& TGenericDDAS::GetHit(int i){
 /* Detects whether file type is .evt or mode3 due to different header sizes ****/
 /*******************************************************************************/
 int TGenericDDAS::BuildHits(std::vector<TRawEvent>& raw_data) {
-  //Check if sorting data from NSCL .evt file or GRETINA mode2 data
+  //Check if sorting data from NSCL .evt file or GRETA mode2 data
   if(!fFileDetermined) {
     kFileType fFileType = raw_data.at(0).GetFileType();
     switch(fFileType) {
-      case GRETINA_MODE2:
+      case GRETA_MODE2:
 	fGEB = true;
         break;
       case NSCL_EVT:
@@ -104,7 +104,7 @@ int TGenericDDAS::BuildHits(std::vector<TRawEvent>& raw_data) {
     ddas_hits.push_back(hit);
     fSize++;
   }
-  return Size();
+  return GetSize();
 }
 
 /*******************************************************************************/

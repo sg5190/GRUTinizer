@@ -19,23 +19,27 @@ public:
   virtual void  Clear(Option_t *opt = "" );
   virtual void  Print(Option_t *opt = "" ) const;
 
-  Int_t  Address()   const      { return fAddress; }
-  virtual Int_t  Charge() const;
-  virtual Double_t  Time() const           { return fTime; }
+  Int_t  GetAddress()   const      { return fAddress; }
+  virtual Int_t  GetCharge() const;
+  virtual Double_t  GetTime() const           { return fTime; }
   virtual Int_t GetDetnum() const;
-  virtual double  CFDTime() const           { return fCFD; }
-  long   Timestamp() const      { return fTimestamp; }
+  virtual double  GetCFDTime() const           { return fCFD; }
+  long GetTimestamp() const      { return fTimestamp; }
+  long GetTimestampNs() const { return fTimestampNs; };
 
   void SetAddress(int address)      { fAddress = address; }
   void SetCharge(int charge);
   void SetTime(double time)            { fTime = time; }
-  void SetTimestamp(long timestamp) { fTimestamp = timestamp; }
+  void SetTimestamp(long timestamp, double tsunit = 10.0) {
+    fTimestamp = timestamp;
+    fTimestampNs = timestamp * tsunit;
+  }
   void SetCFDTime(double cfd)            { fCFD = cfd; }
 
   double GetEnergy() const; //applies TChannel ENERGYCOEFF to Charge
-  double GetTime() const;   //applies TChannel TIMECOEFF to Time()
+//  double GetTime() const;   //applies TChannel TIMECOEFF to Time()
 
-  void SetEnergy(double energy);
+  void SetEnergy(double energy, bool addback);
   void AddEnergy(double eng);
 
   static const TVector3 BeamUnitVec; //!
@@ -55,6 +59,7 @@ public:
 protected:
   Int_t   fAddress;
   long    fTimestamp;
+  long    fTimestampNs;
   Float_t fCharge;
   double fTime;
   double fCFD;

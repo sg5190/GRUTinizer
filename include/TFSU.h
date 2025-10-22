@@ -25,7 +25,7 @@ class TFSU: public TDetector {
     TFSUHit GetDeltaE() const { return fDeltaE; }
     TFSUHit GetE()      const { return fEnergy; }
 
-    bool GoodParticle() const { if(fDeltaE.Charge()<1 || fEnergy.Charge()<1) return false; return true; }
+    bool GoodParticle() const { if(fDeltaE.GetCharge()<1 || fEnergy.GetCharge()<1) return false; return true; }
 
   private:
     int  BuildHits(std::vector<TRawEvent>& raw_data);

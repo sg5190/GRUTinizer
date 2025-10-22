@@ -25,9 +25,6 @@ public:
   void SetEventCounter(Long_t event) { fEventCounter = event; }
 
   Long_t GetEventCounter() { return fEventCounter;}
-  Long_t GetTimestamp()    { return Timestamp(); }
-
-  TVector3 CRDCTrack();  // not a finished method
 
   //S800 track determined from inverse map with shifts sata, sbta for ata and
   //bta, respectively. Note these shifts are applied in addition to the shifts
@@ -70,60 +67,13 @@ public:
 
   TCrdc         &GetCrdc(int x=0)  const { if(x==0) return (TCrdc&)crdc1;
                                            else return (TCrdc&)crdc2;}
-  TTof          &GetTof()          const { return (TTof&)tof;        }
   TMTof         &GetMTof()         const { return (TMTof&)mtof;        }
   TIonChamber   &GetIonChamber()   const { return (TIonChamber&)ion; }
-  TScintillator &GetScint(int x=0) const { return (TScintillator&)scint[x]; }
-  //Added 1/4/2016 for getting trigbit - BAE
   TTrigger      &GetTrigger()      const { return (TTrigger&)trigger;}
   THodoscope &GetHodoscope() const { return (THodoscope&)hodo;}
 
 
   float GetIonSum() const { return ion.GetSum(); }
-
-  //Note c1 is the AFP correction and c2 is the XFP correction
-  float GetTofE1_TAC(float c1=0.00,float c2=0.00)  const;
-  float GetTofXFPE1_TAC(float c1=0.00,float c2=0.00)  const;
-  float GetTofE1_TDC(float c1=0.00,float c2=0.00)  const;
-  float GetTofXFP_E1_TDC(float c1=0.00,float c2=0.00)  const;
-  float GetTofE1_MTDC(float c1=0.00,float c2=0.00,int i=0) const;
-
-  float GetCorrTOF_OBJTAC() const;
-  float GetCorrTOF_XFPTAC() const;
-  float GetOBJRaw_TAC() const;
-  float GetXFRaw_TAC() const;
-
-  float GetCorrTOF_OBJ() const;
-  float GetCorrTOF_XFP() const;
-  float GetOBJ_E1Raw() const;
-  float GetXF_E1Raw() const;
-  //===================================================
-
-  float GetCorrTOF_OBJ_MESY(int i=0) const;
-
-  float GetOBJ_E1Raw_MESY(int i=0) const;
-  float GetOBJ_E1Raw_MESY_Ch15(int i=0) const;
-
-  float GetXF_E1Raw_MESY(int i=0) const;
-  float GetXF_E1Raw_MESY_Ch15(int i=0) const;
-
-  float GetRawOBJ_MESY(unsigned int i=0) const;
-
-  float GetRawE1_MESY(unsigned int i=0) const;
-  float GetRawE1_MESY_Ch15(unsigned int i=0) const;
-
-  float GetRawXF_MESY(unsigned int i=0) const;
-
-  // Return the correlated gvalue corrected time-of-flight obj to e1.
-  // If no corrections are passed, GValues OBJ_MTOF_CORR_AFP and
-  // OBJ_MTOF_CORR_XFP are used
-  double GetMTofObjE1() const ;
-  double GetMTofObjE1(double afp_cor, double xfp_cor) const ;
-  // Return the correlated gvalue corrected time-of-flight xfp to e1.
-  // If no corrections are passed, GValues XFP_MTOF_CORR_AFP and
-  // XFP_MTOF_CORR_XFP are used
-  double GetMTofXfpE1() const ;
-  double GetMTofXfpE1(double afp_cor, double xfp_cor) const ;
 
   double GetMTofCorr(double correlatedtof, double afp, double xfp, double afp_cor, double xfp_cor) const ;
 
@@ -147,8 +97,6 @@ public:
 
 
   int GetReg() const { return trigger.GetRegistr(); }
-  float GetCorrIonSum() const;
-
 
 public:
 
@@ -156,22 +104,18 @@ private:
   virtual int  BuildHits(std::vector<TRawEvent>& raw_data);
 
   bool HandleTrigPacket(unsigned short*,int);     //!
-  bool HandleTOFPacket(unsigned short*,int);      //!
-  bool HandleScintPacket(unsigned short*,int);    //!
   bool HandleIonCPacket(unsigned short*,int);     //!
   bool HandleCRDCPacket(unsigned short*,int);     //!
   bool HandleMTDCPacket(unsigned short*,int);     //!
   bool HandleHodoPacket(unsigned short*,int);     //!
+  bool HandleSRSPacket(unsigned short*,int);     //!
 
-  TScintillator scint[3];
   TTrigger     trigger;
-  TTof         tof;
   TMTof        mtof;
   TIonChamber  ion;
   TCrdc        crdc1;
   TCrdc        crdc2;
   THodoscope   hodo;
-  //TMultiHitTof multi_tof;
 
   Long_t fEventCounter;
   static bool fGlobalReset; //!

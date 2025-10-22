@@ -34,8 +34,8 @@ void TFastScintHit::Clear(Option_t* opt) {
 }
 
 void TFastScintHit::Print(Option_t *opt) const {
-  printf("LaBrHit[%i]:   chg[%04i] -> %.02f  |  time[%04f] -> %.02f \n",
-	 GetChannel(),Charge(),GetEnergy(),Time(),GetTime());
+  printf("LaBrHit[%i]:   chg[%04i] -> %.02f  |  time[%04f]",
+	 GetChannel(),GetCharge(),GetEnergy(),GetTime());
 }
 
 

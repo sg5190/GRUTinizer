@@ -10,12 +10,9 @@
 #include "TGEBEvent.h"
 #include "TGRUTOptions.h"
 #include "TInverseMap.h"
+#include "TNSCLEvent.h"
 
-
-bool TS800::fGlobalReset =false;
-
-static double f_mafp_cor = GValue::Value("OBJ_MTOF_CORR_AFP");
-static double f_mxfp_cor = GValue::Value("OBJ_MTOF_CORR_XFP");
+bool TS800::fGlobalReset = false;
 
 /*******************************************************************************/
 /* TS800 ***********************************************************************/
@@ -35,11 +32,7 @@ void TS800::Copy(TObject& obj) const {
   TDetector::Copy(obj);
 
   TS800& other = (TS800&)obj;
-  for(int i = 0; i<3; i++){
-    scint[i].Copy(other.scint[i]);
-  }
   trigger.Copy(other.trigger);
-  tof.Copy(other.tof);
   mtof.Copy(other.mtof);
   ion.Copy(other.ion);
   crdc1.Copy(other.crdc1);
@@ -180,16 +173,6 @@ TVector3 TS800::Track(float Ata, float Bta, double sata,double sbta) const {
 
 
 /*******************************************************************************/
-/* Unused function - may be removed at later date ******************************/
-/*******************************************************************************/
-TVector3 TS800::CRDCTrack(){
-  TVector3 track;
-  track.SetTheta(TMath::ATan((GetCrdc(0).GetDispersiveX()-GetCrdc(1).GetDispersiveX())/1073.0)); // rad
-  track.SetPhi(TMath::ATan((GetCrdc(0).GetNonDispersiveY()-GetCrdc(1).GetNonDispersiveY())/1073.0)); // rad
-  return track;
-}
-
-/*******************************************************************************/
 /* Returns X position of the CRDCs *********************************************/
 /*******************************************************************************/
 float TS800::GetXFP(int i) const {
@@ -207,7 +190,7 @@ float TS800::GetYFP(int i) const {
 /* Dispersive X angle in the Focal Plane calculated from CRDCs positions *******/
 /*******************************************************************************/
 float TS800::GetAFP() const{
-  if(GetCrdc(0).Size()==0||GetCrdc(1).Size()==0){
+  if(GetCrdc(0).GetSize()==0||GetCrdc(1).GetSize()==0){
     return sqrt(-1);
   }
   return TMath::ATan((GetXFP(1)-GetXFP(0))/1073.0);
@@ -221,7 +204,7 @@ float TS800::GetAFP(float xfp0, float xfp1) const{
 /* Dispersive Y angle in the Focal Plane calculated from CRDCs positions *******/
 /*******************************************************************************/
 float TS800::GetBFP() const{
-   if(GetCrdc(0).Size()==0||GetCrdc(1).Size()==0){
+   if(GetCrdc(0).GetSize()==0||GetCrdc(1).GetSize()==0){
     return sqrt(-1);
   }
   return TMath::ATan((GetYFP(1)-GetYFP(0))/1073.0);
@@ -238,16 +221,9 @@ void TS800::Clear(Option_t* opt){
   TDetector::Clear(opt);
   crdc1.Clear();
   crdc2.Clear();
-
-  scint[0].Clear();
-  scint[1].Clear();
-  scint[2].Clear();
-
-  tof.Clear();
   mtof.Clear();
   trigger.Clear();
   ion.Clear();
-
   hodo.Clear();
 }
 
@@ -266,8 +242,11 @@ int TS800::BuildHits(std::vector<TRawEvent>& raw_data){
     ptr += sizeof(TRawEvent::GEBS800Header);
     //Here, we are now pointing at the size of the next S800 thing.  Inclusive in shorts.
     unsigned short *data = (unsigned short*)(event.GetPayload()+ptr);
+
     size_t x = 0;
-    while(x<(head->total_size-sizeof(TRawEvent::GEBS800Header)+16)) {  //total size is inclusive.
+    int hsize = head->total_size - sizeof(TRawEvent::GEBS800Header) + 16;
+    if(hsize < 0) return 0;
+    while(x<(size_t)hsize) {  //total size is inclusive.
       int size             = *(data+x);
       unsigned short *dptr = (data+x+1);
       x+=size;
@@ -278,10 +257,8 @@ int TS800::BuildHits(std::vector<TRawEvent>& raw_data){
 	break;
       case 0x5802:  // S800 TOF - No Longer present in S800 DAQ
 	//event.Print("all0x5802");
-	HandleTOFPacket(dptr+1,sizeleft);
 	break;
       case 0x5810:  // S800 Scint - No Longer present in S800 DAQ
-	HandleScintPacket(dptr+1,sizeleft);
 	break;
       case 0x5820:  // S800 Ion Chamber
 	HandleIonCPacket(dptr+1,sizeleft);
@@ -310,6 +287,9 @@ int TS800::BuildHits(std::vector<TRawEvent>& raw_data){
 	break;
       case 0x58e0:
 	break;
+      case 0x5848:
+        HandleSRSPacket(dptr+1,sizeleft);
+        break;
       case 0x58f0: //MTDC packet - contains Time information
         HandleMTDCPacket(dptr+1,sizeleft);
 	break;
@@ -359,39 +339,60 @@ bool TS800::HandleTrigPacket(unsigned short *data,int size) {
 }
 
 /*******************************************************************************/
-/* Unpacks ToF Packet **********************************************************/
-/* No longer Present in S800 DAQ may be removed at later date ******************/
+/* Unpacks SRS packet into TCRDC class (for now) *******************************/
 /*******************************************************************************/
-bool TS800::HandleTOFPacket(unsigned short *data ,int size){
+bool TS800::HandleSRSPacket(unsigned short *data,int size) {
 
-  for(int x = 0; x < size; x++){
-    unsigned short current = *(data+x);
-    switch(current&0xf000){
-    case 0xc000: // RF
-      tof.SetRF(current&0x0fff);
-      break;
-    case 0xd000: // Object Scin
-      tof.SetOBJ(current&0x0fff);
-      break;
-    case 0xe000: // XFP scint
-      tof.SetXFP(current&0x0fff);
-      break;
-    case 0xf000: // Si
-      tof.SetSI(current&0x0fff);
-      break;
-    case 0x4000: // TAC XFP scint
-      tof.SetTacXFP(current&0x0fff);
-      break;
-    case 0x5000: // TAC Object Scint
-      tof.SetTacOBJ(current&0x0fff);
-      break;
-    default:
-      return false;
-      break;
+  UShort_t dcId = *(data++);
+  UShort_t length = *(data++);
+  short i = length - 1;
+  TCrdc *current_mpdc = 0;
+  if(dcId == 0) current_mpdc = &crdc1;
+  else if(dcId == 1) current_mpdc = &crdc2;
+
+  current_mpdc->SetId((short)dcId);
+  int nHits = i/16;
+//  double tmpT = 0.0;
+//  double tmpTa = 0.0;
+  for(int iHit = 0; iHit < nHits; iHit++) {
+
+    int fecIdBuff = *(data++);
+    int vmmIdBuff = *(data++);
+    int chnoBuff = *(data++);
+    int chnoMappedBuff = *(data++);
+    int adcBuff = *(data++);
+    int tdcBuff = *(data++);
+
+    uint64_t recoTs = 0;
+    for(int i = 0; i < 4; i++) {
+      recoTs |= (static_cast<uint64_t>(*(data++))) << (i * 16);
     }
+
+    short bcid = *(data++);
+    short triggerOffset = *(data++);
+
+    uint64_t recoMarker = 0;
+    for(int i = 0; i < 2; i++) {
+      recoMarker |= (static_cast<uint64_t>(*(data++))) << (i * 16);
+    }
+
+    double timeFec = triggerOffset * 4096.0 * 22.5;
+    double timeChip = bcid * 22.5 + (1.5 * 22.5 - tdcBuff * 60/255.0);
+    double driftTime = (timeChip + timeFec - recoMarker * 22.5);
+
+//    tmpT += adcBuff*driftTime;
+//    tmpTa += adcBuff;
+//std::cout << chnoMappedBuff << "\t" << driftTime << "\t" << std::endl;;
+    current_mpdc->SetDrifttime(driftTime);
+    current_mpdc->AddPoint(chnoMappedBuff,chnoBuff,adcBuff);
+
   }
+//std::cout << "\n\n";
+//  current_mpdc->SetDrifttime(tmpT/tmpTa);
+
   return true;
 }
+
 
 /*******************************************************************************/
 /* Unpacks CRDC data packets ***************************************************/
@@ -454,58 +455,6 @@ bool TS800::HandleCRDCPacket(unsigned short *data,int size) {
   current_crdc->SetAnode(*(data+x));
   x++;
   current_crdc->SetTime(*(data+x));
-  return true;
-}
-
-/*******************************************************************************/
-/* Unpacks ToF Packet **********************************************************/
-/* No longer Present in S800 DAQ may be removed at later date ******************/
-/*******************************************************************************/
-bool TS800::HandleScintPacket(unsigned short* data, int size){
-
-  for(int x = 0; x < size; x += 2){
-    unsigned short current = *(data+x);
-    unsigned short current_p1 = *(data+x+1);
-
-    if(((current)&(0xf000))==((current_p1)&(0xf000))){
-      switch(current&0xf000){
-      case 0x0000:
-	scint[0].SetdE_Up(current&0x0fff);
-	scint[0].SetTime_Up(current_p1&0x0fff);
-	scint[0].SetID(1);
-	break;
-      case 0x1000:
-	scint[0].SetdE_Down(current&0x0fff);
-	scint[0].SetTime_Down(current_p1&0x0fff);
-	scint[0].SetID(1);
-	break;
-      case 0x2000:
-	scint[1].SetdE_Up(current&0x0fff);
-	scint[1].SetTime_Up(current_p1&0x0fff);
-	scint[1].SetID(2);
-	break;
-      case 0x3000:
-	scint[1].SetdE_Down(current&0x0fff);
-	scint[1].SetTime_Down(current_p1&0x0fff);
-	scint[1].SetID(2);
-	break;
-      case 0x4000:
-	scint[2].SetdE_Up(current&0x0fff);
-	scint[2].SetTime_Up(current_p1&0x0fff);
-	scint[2].SetID(3);
-	break;
-      case 0x5000:
-	scint[2].SetdE_Down(current&0x0fff);
-	scint[2].SetTime_Down(current_p1&0x0fff);
-	scint[2].SetID(3);
-	break;
-      default:
-	return false;
-	break;
-      }
-    }
-    else return false;
-  }
   return true;
 }
 
@@ -638,212 +587,6 @@ TDetectorHit& TS800::GetHit(int i){
   return *hit;
 }
 
-/*******************************************************************************/
-/* Below functions are related to TTOF *****************************************/
-/* This module is no lonnger present in S800 DAQ and these functions may be ****/
-/* removed at a later date *****************************************************/
-/*******************************************************************************/
-float TS800::GetTofE1_TAC(float c1,float c2)  const {
-  if(GetTof().GetTacOBJ()>-1) return GetTof().GetTacOBJ() + c1 * GetAFP() + c2  * GetCrdc(0).GetDispersiveX();
-  return sqrt(-1);
-}
-
-float TS800::GetTofXFPE1_TAC(float c1,float c2)  const {
-  if(GetTof().GetTacXFP()>-1) return GetTof().GetTacXFP() + c1 * GetAFP() + c2  * GetCrdc(0).GetDispersiveX();
-  return sqrt(-1);
-}
-
-float TS800::GetTofE1_TDC(float c1,float c2)  const {
-  if(GetTof().GetOBJ()>-1) return GetTof().GetOBJ() - GetScint().GetTimeUp() + c1 * GetAFP() + c2  * GetCrdc(0).GetDispersiveX();
-  return sqrt(-1);
-}
-
-float TS800::GetTofXFP_E1_TDC(float c1,float c2)  const {
-  if(GetTof().GetXFP()>-1) return GetTof().GetXFP() - GetScint().GetTimeUp() + c1 * GetAFP() + c2  * GetCrdc(0).GetDispersiveX();
-  return sqrt(-1);
-}
-
-float TS800::GetOBJRaw_TAC() const {
-  return (GetTof().GetTacOBJ());
-}
-
-float TS800::GetXFRaw_TAC() const {
-  return (GetTof().GetTacXFP());
-}
-
-float TS800::GetOBJ_E1Raw() const {
-  return (GetTof().GetOBJ() - GetScint().GetTimeUp());
-}
-
-float TS800::GetXF_E1Raw() const {
-  return (GetTof().GetXFP() - GetScint().GetTimeUp());
-}
-
-float TS800::GetCorrTOF_OBJTAC() const {
-  double afp_cor = GValue::Value("OBJTAC_TOF_CORR_AFP");
-  double xfp_cor = GValue::Value("OBJTAC_TOF_CORR_XFP");
-  return GetTofE1_TAC(afp_cor,xfp_cor);
-}
-
-float TS800::GetCorrTOF_XFPTAC() const {
-  double afp_cor = GValue::Value("XFPTAC_TOF_CORR_AFP");
-  double xfp_cor = GValue::Value("XFPTAC_TOF_CORR_XFP");
-  return GetTofXFPE1_TAC(afp_cor,xfp_cor);
-}
-
-float TS800::GetCorrTOF_OBJ() const {
-  double afp_cor = GValue::Value("OBJ_TOF_CORR_AFP");
-  double xfp_cor = GValue::Value("OBJ_TOF_CORR_XFP");
-  return GetTofE1_TDC(afp_cor,xfp_cor);
-}
-
-float TS800::GetCorrTOF_XFP() const {
-  double afp_cor = GValue::Value("XFP_TOF_CORR_AFP");
-  double xfp_cor = GValue::Value("XFP_TOF_CORR_XFP");
-  return GetTofXFP_E1_TDC(afp_cor,xfp_cor);
-}
-
-float TS800::GetCorrTOF_OBJ_MESY(int i) const {
-  f_mafp_cor = GValue::Value("OBJ_MTOF_CORR_AFP");
-  f_mxfp_cor = GValue::Value("OBJ_MTOF_CORR_XFP");
-  return GetTofE1_MTDC(f_mafp_cor,f_mxfp_cor,i);
-}
-/*******************************************************************************/
-/* End of Tof Functions ********************************************************/
-/*******************************************************************************/
-
-/*******************************************************************************/
-/* Returns value of MTof vectors ***********************************************/
-/* Could probably be replaced with more general function ***********************/
-/*******************************************************************************/
-float TS800::GetRawOBJ_MESY(unsigned int i) const {
-  if(i >= mtof.fObj.size()) return sqrt(-1);
-  return (mtof.fObj.at(i));
-}
-
-float TS800::GetRawE1_MESY(unsigned int i) const {
-  if(i >= mtof.fE1Up.size()) return sqrt(-1);
-  return (mtof.fE1Up.at(i));
-}
-
-float TS800::GetRawE1_MESY_Ch15(unsigned int i) const {
-  if(i >= mtof.fRef.size()) return sqrt(-1);
-  return (mtof.fRef.at(i));
-}
-
-float TS800::GetRawXF_MESY(unsigned int i) const {
-  if(i >= mtof.fXfp.size()) return sqrt(-1);
-  return (mtof.fXfp.at(i));
-}
-
-/*******************************************************************************/
-/* ToF functions ***************************************************************/
-/* Do not appear to be currently used and could be replaced with ***************/
-/* TMTof.GetCorrelatedTof() ****************************************************/
-/*******************************************************************************/
-float TS800::GetOBJ_E1Raw_MESY(int i) const {
-  std::vector<float> result;
-  for(unsigned int x = 0; x < mtof.fObj.size(); x++) {
-    for(unsigned int y = 0; y < mtof.fE1Up.size(); y++) {
-      result.push_back( mtof.fObj.at(x) - mtof.fE1Up.at(y));
-    }
-  }
-  if(result.size() > (unsigned int)i) return result.at(i);
-  return sqrt(-1.0);
-}
-
-float TS800::GetOBJ_E1Raw_MESY_Ch15(int i) const {
-  std::vector<float> result;
-  for(unsigned int x = 0; x < mtof.fObj.size(); x++) {
-    for(unsigned int y = 0; y < mtof.fRef.size(); y++) {
-      result.push_back( mtof.fObj.at(x) - mtof.fRef.at(y));
-      }
-    }
-  if(result.size()>(unsigned int)i) return result.at(i);
-  return sqrt(-1.0);
-}
-
-float TS800::GetXF_E1Raw_MESY(int i) const {
-  std::vector<float> result;
-  for(unsigned int x = 0; x < mtof.fXfp.size(); x++) {
-    for(unsigned int y = 0; y < mtof.fE1Up.size(); y++) {
-      result.push_back( mtof.fXfp.at(x) - mtof.fE1Up.at(y));
-    }
-  }
-  if(result.size() > (unsigned int)i) return result.at(i);
-  return sqrt(-1.0);
-}
-
-float TS800::GetXF_E1Raw_MESY_Ch15(int i) const {
-  std::vector<float> result;
-  for(unsigned int x = 0; x < mtof.fXfp.size(); x++) {
-    for(unsigned int y = 0; y < mtof.fRef.size(); y++) {
-      result.push_back( mtof.fXfp.at(x) - mtof.fRef.at(y));
-    }
-  }
-  if(result.size() > (unsigned int)i) return result.at(i);
-  return sqrt(-1.0);
-}
-
-float TS800::GetTofE1_MTDC(float c1,float c2,int i) const {
-  std::vector<float> result;
-  for(unsigned int x = 0; x < mtof.fObj.size(); x++) {
-    for(unsigned int y = 0;y < mtof.fE1Up.size(); y++) {
-      result.push_back( mtof.fObj.at(x) - mtof.fE1Up.at(y) + c1 * GetAFP() + c2  * GetCrdc(0).GetDispersiveX());
-    }
-  }
-  if(result.size() > (unsigned int)i) return result.at(i);
-  return sqrt(-1.0);
-}
-
-/*******************************************************************************/
-/* Corrected ToF between OBJ and E1 ********************************************/
-/* Should use more general GetMTofCorr() ***************************************/
-/*******************************************************************************/
-double TS800::GetMTofObjE1() const {
-  double afp_cor = GValue::Value("OBJ_MTOF_CORR_AFP");
-  double xfp_cor = GValue::Value("OBJ_MTOF_CORR_XFP");
-  static int line_displayed = 0;
-  if(std::isnan(afp_cor) || std::isnan(xfp_cor)) {
-    if(line_displayed < 10) {
-      printf(ALERTTEXT "Attmepting to do mtof obj correction without values!" RESET_COLOR "\n");
-      fflush(stdout);
-      line_displayed++;
-    }
-    return sqrt(-1);
-  }
-  return GetMTofObjE1(afp_cor, xfp_cor);
-}
-
-double TS800::GetMTofObjE1(double afp_cor, double xfp_cor) const {
-  // I return the correlated gvalue corrected time-of-flight obj to e1.
-  return(GetMTof().GetCorrelatedObjE1()
-         + afp_cor * GetAFP() + xfp_cor  * GetCrdc(0).GetDispersiveX());
-}
-
-/*******************************************************************************/
-/* Corrected ToF between XFP and E1 ********************************************/
-/* Should use more general GetMTofCorr() ***************************************/
-/*******************************************************************************/
-double TS800::GetMTofXfpE1() const {
-  double afp_cor = GValue::Value("XFP_MTOF_CORR_AFP");
-  double xfp_cor = GValue::Value("XFP_MTOF_CORR_XFP");
-  static int line_displayed = 0;
-  if(std::isnan(afp_cor) || std::isnan(xfp_cor)) {
-    if(line_displayed < 10) {
-      printf(ALERTTEXT "Attmepting to do mtof xfp correction without values!" RESET_COLOR "\n");
-      fflush(stdout);
-      line_displayed++;
-    }
-    return sqrt(-1);
-  }
-  return GetMTofXfpE1(afp_cor, xfp_cor);
-}
-
-double TS800::GetMTofXfpE1(double afp_cor, double xfp_cor) const {
-  return(GetMTof().GetCorrelatedXfpE1()
-         + afp_cor * GetAFP() + xfp_cor  * GetCrdc(0).GetDispersiveX());
-}
 /*******************************************************************************/
 /* General purpose function to calculate corrected time of flight between any **/
 /* two channels - Replaces GetMTofOBjE1 and GetMTofXFPE1 ***********************/

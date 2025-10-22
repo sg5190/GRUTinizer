@@ -16,9 +16,9 @@ void TFSU::Print(Option_t *opt) const {
   TString sopt(opt);
   sopt.ToLower();
   printf("+++++++++++++\n");
-  printf("TFSU @ %lu \n",Timestamp());
-  printf("dE: %i\t%ld\n",fDeltaE.Charge(),fDeltaE.Timestamp());
-  printf("E:  %i\t%ld\n",fEnergy.Charge(),fEnergy.Timestamp());
+  printf("TFSU @ %lu \n",GetTimestamp());
+  printf("dE: %i\t%ld\n",fDeltaE.GetCharge(),fDeltaE.GetTimestamp());
+  printf("E:  %i\t%ld\n",fEnergy.GetCharge(),fEnergy.GetTimestamp());
   printf("contains %lu hits\n",fFSUHits.size());
   if(sopt.Contains("all")) {
     for(unsigned int i=0;i<fFSUHits.size();i++)
@@ -45,7 +45,7 @@ int TFSU::BuildHits(std::vector<TRawEvent>& raw_data) {
     TFSUHit hit;
     hit.SetTimestamp(nscl.GetTimestamp());
     hit.SetAddress((*((Int_t*)(nscl.GetBody()+4)))&0x00000fff);
-    TChannel *channel = TChannel::GetChannel(hit.Address());
+    TChannel *channel = TChannel::GetChannel(hit.GetAddress());
     if(!channel) continue;
     int charge = *((Int_t*)(nscl.GetBody()+16));
     hit.SetCharge(charge&0x0000ffff);

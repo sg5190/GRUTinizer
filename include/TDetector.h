@@ -32,11 +32,14 @@ public:
   virtual void InsertHit(const TDetectorHit&) = 0;
   virtual TDetectorHit& GetHit(int i)         = 0;
 
-  virtual size_t Size() const { return (size_t)fSize; }
+  virtual size_t GetSize() const { return (size_t)fSize; }
 
-
-  Long_t Timestamp() const { return fTimestamp; }
-  void   SetTimestamp(Long_t timestamp)  { fTimestamp = timestamp; }
+  Long_t GetTimestamp() const {return fTimestamp; }
+  Long_t GetTimestampNs() const {return fTimestampNs; }
+  void   SetTimestamp(Long_t timestamp, double tsunit = 10.0)  {
+    fTimestamp = timestamp;
+    fTimestampNs = timestamp * tsunit;
+  }
 
   enum EDetectorStatus { kUnbuilt = BIT(15) };
 
@@ -50,6 +53,7 @@ public:
 protected:
   int fSize;
   Long_t fTimestamp;
+  Long_t fTimestampNs;
 
   /// Start of the run, in unix time.
   /**
@@ -57,7 +61,7 @@ protected:
      It is the number of seconds since January 1, 1970.
      If unavailable, will be 0.
    **/
-  unsigned int fRunStart; 
+  unsigned int fRunStart;
 
 
 private:

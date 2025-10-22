@@ -117,7 +117,7 @@ void TLenda::BuildLendaBars() {
       //Check the top and bottom hit are the same bar
       if(top_hits.at(i).GetDetnum() == bottom_hits.at(j).GetDetnum()) {
 	//Checks for good time
-        if(top_hits.at(i).Timestamp() - bottom_hits.at(j).Timestamp() < TDiff) {
+        if(top_hits.at(i).GetTimestamp() - bottom_hits.at(j).GetTimestamp() < TDiff) {
 	  //Use top hit for all data
 	  TLendaHit dhit = top_hits.at(i);
 	  bar_hits.push_back(dhit);

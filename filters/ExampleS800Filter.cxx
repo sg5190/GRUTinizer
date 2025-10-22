@@ -4,7 +4,7 @@
 
 #include "TRuntimeObjects.h"
 
-#include <TGretina.h>
+#include <TGreta.h>
 #include <TS800.h>
 #include <TGates.h>
 

@@ -5,18 +5,12 @@
 
 //#include "RawDataQueue.h"
 //#include "RawDataQueue.h"
-//#include "TDetectorEnv.h"
 #include "TGEBEvent.h"
 #include "TGRUTOptions.h"
 #include "TNSCLEvent.h"
 
 #include "TDetectorEnv.h"
 #include "TUnpackedEvent.h"
-
-#include "chrono"
-using namespace std::chrono;
-
-//#include "TMode3.h"
 
 ClassImp(TUnpackingLoop)
 
@@ -40,8 +34,6 @@ TUnpackingLoop::TUnpackingLoop(std::string name)
 TUnpackingLoop::~TUnpackingLoop() { }
 
 bool TUnpackingLoop::Iteration(){
-//  auto start = high_resolution_clock::now();
-
   std::vector<TRawEvent> event;
   int error = input_queue->Pop(event);
   if(error < 0){
@@ -53,12 +45,10 @@ bool TUnpackingLoop::Iteration(){
       return true;
     }
   }
-  //int counter=0;
-  //printf("here 1\n"); fflush(stdout);
+
   fOutputEvent = new TUnpackedEvent;
   for(unsigned int i=0;i<event.size();i++) {
     TRawEvent& raw_event = event[i];
-    //printf("counter %i\t%i\n",counter++, raw_event.GetFileType()); fflush(stdout);
     switch(raw_event.GetFileType()){
       case kFileType::NSCL_EVT:
       {
@@ -67,8 +57,8 @@ bool TUnpackingLoop::Iteration(){
       }
         break;
 
-      case kFileType::GRETINA_MODE2:
-      case kFileType::GRETINA_MODE3:
+      case kFileType::GRETA_MODE2:
+      case kFileType::GRETA_MODE3:
       {
         TGEBEvent geb_event(raw_event);
         HandleGEBData(geb_event);
@@ -81,11 +71,6 @@ bool TUnpackingLoop::Iteration(){
     }
   }
 
-//  auto stop = high_resolution_clock::now();
-//  auto duration = duration_cast<nanoseconds>(stop - start);
-//  std::cout << event.size() << " Time taken in Build " << duration.count() << " microseconds" << std::endl;
-//  auto start = high_resolution_clock::now();
-
   fOutputEvent->Build();
   fOutputEvent->SetRunStart(fRunStart);
 
@@ -93,10 +78,6 @@ bool TUnpackingLoop::Iteration(){
     output_queue->Push(fOutputEvent);
     fOutputEvent = NULL;
   }
-//  auto stop2 = high_resolution_clock::now();
-//  auto duration2 = duration_cast<nanoseconds>(stop2 - start);
-//  std::cout << "Time taken in Detector " << duration2.count() << " microseconds" << std::endl;
-
   return true;
 }
 
@@ -117,9 +98,7 @@ void TUnpackingLoop::ClearQueue() {
 }
 
 void TUnpackingLoop::HandleNSCLData(TNSCLEvent& event) {
-//  auto start = high_resolution_clock::now();
 
-  //printf("in handle nscl\t%i\n",event.GetEventType()); fflush(stdout);
   switch(event.GetEventType()) {
     case kNSCLEventType::BEGIN_RUN:            // 0x0001
     {
@@ -140,42 +119,27 @@ void TUnpackingLoop::HandleNSCLData(TNSCLEvent& event) {
     case kNSCLEventType::FIRST_USER_ITEM_CODE: // 0x8000
       break;
     case kNSCLEventType::PERIODIC_SCALERS:     // 0x0014
-      //HandleNSCLPeriodicScalers(event);
+      HandleNSCLPeriodicScalers(event);
       break;
     case kNSCLEventType::PHYSICS_EVENT:        // 0x001E
-      HandleBuiltNSCLData(event);
-
-/*      if(event.IsBuiltData()){
+      if(event.IsBuiltData()){
         HandleBuiltNSCLData(event);
       } else {
         HandleUnbuiltNSCLData(event);
       }
-*/
       break;
   }
-//  auto stop = high_resolution_clock::now();
-//  auto duration = duration_cast<nanoseconds>(stop - start);
-//  std::cout << "Time taken in NSCL " << duration.count() << " microseconds" << std::endl;
 }
 
 
 void TUnpackingLoop::HandleBuiltNSCLData(TNSCLEvent& event){
-//  auto start = high_resolution_clock::now();
   TNSCLBuiltRingItem built(event);
-
-  //printf("i am being called!!!\n"); fflush(stdout);
-  //int counter=0;
+//  printf("i am being called!!!\n"); fflush(stdout);
   for(unsigned int i=0; i<built.NumFragments(); i++){
-    //printf("\tcounter = %i\n",counter++); fflush(stdout);
     TNSCLFragment& fragment = built.GetFragment(i);
 
     int source_id = fragment.GetFragmentSourceID();
-//  auto start = high_resolution_clock::now();
     kDetectorSystems detector = TDetectorEnv::Get().DetermineSystem(source_id);
-//  auto stop = high_resolution_clock::now();
-//  auto duration = duration_cast<nanoseconds>(stop - start);
-//  std::cout << built.NumFragments() << " Time in Built " << duration.count() << " nanoseconds" << std::endl;
-
 
     TRawEvent frag_event = fragment.GetNSCLEvent();
     // S800 events in CAESAR/S800 event have no body header.
@@ -184,13 +148,8 @@ void TUnpackingLoop::HandleBuiltNSCLData(TNSCLEvent& event){
       frag_event.SetFragmentTimestamp(fragment.GetFragmentTimestamp());
     }
 */
-//    fOutputEvent->AddRawData(frag_event, kDetectorSystems::SEGA);
     fOutputEvent->AddRawData(frag_event, detector);
   }
-//  auto stop = high_resolution_clock::now();
-//  auto duration = duration_cast<nanoseconds>(stop - start);
-//  std::cout << built.NumFragments() << " Time in Built " << duration.count() << " nanoseconds" << std::endl;
-
 }
 
 void TUnpackingLoop::HandleUnbuiltNSCLData(TNSCLEvent& event){
@@ -226,8 +185,8 @@ void TUnpackingLoop::HandleGEBData(TGEBEvent& event){
   int type = event.GetEventType();
 
   switch(type) {
-    case 1: // Gretina decomp data.
-      fOutputEvent->AddRawData(event, kDetectorSystems::GRETINA);
+    case 1: // Greta decomp data.
+      fOutputEvent->AddRawData(event, kDetectorSystems::GRETA);
       break;
     case 2: // Gretina Mode3 data.
       HandleGEBMode3(event, kDetectorSystems::MODE3);

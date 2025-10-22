@@ -67,8 +67,8 @@ Int_t TRawEvent::GetEventType() const {
   case NSCL_EVT:
     return ((EVTHeader*)(&fEventHeader))->type();
     
-  case GRETINA_MODE2:
-  case GRETINA_MODE3:
+  case GRETA_MODE2:
+  case GRETA_MODE3:
     return ((GEBHeader*)(&fEventHeader))->type();
 
   default:
@@ -83,9 +83,9 @@ Int_t TRawEvent::GetBodySize() const {
   case NSCL_EVT:
     return ((EVTHeader*)(&fEventHeader))->size() - sizeof(RawHeader); //Size in nscldaq is inclusive
 
-  case GRETINA_MODE2:
-  case GRETINA_MODE3:
-    return ((GEBHeader*)(&fEventHeader))->size() + sizeof(Long_t);  //Size in gretinadaq is exclusive, plus timestamp
+  case GRETA_MODE2:
+  case GRETA_MODE3:
+    return ((GEBHeader*)(&fEventHeader))->size() + sizeof(Long_t);  //Size in gretadaq is exclusive, plus timestamp
 
   default:
     return 0;
@@ -111,8 +111,8 @@ Long_t TRawEvent::GetTimestamp() const {
    case NSCL_EVT:
      return ((TNSCLEvent*)this)->GetTimestamp();
 
-   case GRETINA_MODE2:
-   case GRETINA_MODE3:
+   case GRETA_MODE2:
+   case GRETA_MODE3:
      return ((TGEBEvent*)this)->GetTimestamp();
 
    default:
@@ -135,8 +135,8 @@ const char* TRawEvent::GetPayload() const {
    case NSCL_EVT:
      return ((TNSCLEvent*)this)->GetPayload();
 
-   case GRETINA_MODE2:
-   case GRETINA_MODE3:
+   case GRETA_MODE2:
+   case GRETA_MODE3:
      return ((TGEBEvent*)this)->GetPayload();
 
    default:
@@ -159,8 +159,8 @@ TSmartBuffer TRawEvent::GetPayloadBuffer() const {
    case NSCL_EVT:
      return ((TNSCLEvent*)this)->GetPayloadBuffer();
 
-   case GRETINA_MODE2:
-   case GRETINA_MODE3:
+   case GRETA_MODE2:
+   case GRETA_MODE3:
      return ((TGEBEvent*)this)->GetPayloadBuffer();
 
    default:
@@ -193,13 +193,13 @@ void TRawEvent::Print(Option_t *opt) const {
     std::cout << fEventHeader;
   std::cout << "Timestamp: " << GetTimestamp() << std::endl;
   fBody.Print(options.Data());
-  // printf("\t");
-  // for(int x=0; x<GetBodySize(); x+=2) {
-  //   if((x%16 == 0) &&
-  //      (x!=GetBodySize())){
-  //     printf("\n\t");
-  //   }
-  //   printf("0x%04x  ",*(unsigned short*)(GetBody()+x));
-  // }
-  // printf("\n--------------------------\n");
+   printf("\t");
+   for(int x=0; x<GetBodySize(); x+=2) {
+     if((x%16 == 0) &&
+        (x!=GetBodySize())){
+       printf("\n\t");
+     }
+     printf("0x%04x  ",*(unsigned short*)(GetBody()+x));
+   }
+   printf("\n--------------------------\n");
 }

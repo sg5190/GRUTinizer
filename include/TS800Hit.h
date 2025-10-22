@@ -30,7 +30,7 @@ class TS800Channel : public TDetectorHit {
     virtual void Print(Option_t *opt="") const { printf("[%i] = %i\n",GetId(),GetValue());}
     virtual void Copy(TObject &obj)      const { TDetectorHit::Copy(obj); ((TS800Channel&)obj).fValue = fValue; }
 
-    virtual int  Charge() const { return GetValue(); }
+    virtual int  GetCharge() const { return GetValue(); }
 
   private:
     //void Init() { Class()->IgnoreTObjectStreamer(true); }
@@ -61,7 +61,7 @@ class TTrigger : public TDetectorHit {
     virtual void Clear(Option_t *opt="");
 
   private:
-    virtual int Charge() const { return 0; }
+    virtual int GetCharge() const { return 0; }
 
     unsigned short fregistr;
     short fs800source;
@@ -70,44 +70,6 @@ class TTrigger : public TDetectorHit {
     short fsecondarysource;
 
   ClassDef(TTrigger,1)
-};
-
-
-class TTof : public TDetectorHit { // S800 Time of Flight
-  public:
-    TTof();
-    ~TTof();
-
-    void SetRF(short rf)                { frf=rf; }
-    void SetOBJ(short obj)              { fobj=obj; }
-    void SetXFP(short xfp)              { fxfp=xfp; }
-    void SetSI(short si)                { fsi=si; }
-    void SetTacOBJ(short obj)           { ftac_obj=obj; }
-    void SetTacXFP(short xfp)           { ftac_xfp=xfp; }
-
-    short GetRF()                         { return frf;     }
-    short GetOBJ()                        { return fobj;    }  // tdc!
-    short GetXFP()                        { return fxfp;    }  // tdc!
-    short GetSI()                         { return fsi;     }
-    short GetTacOBJ()                     { return ftac_obj;}  // tac!
-    short GetTacXFP()                     { return ftac_xfp;}  // tac!
-
-
-    virtual void Copy(TObject &)         const;
-    virtual void Print(Option_t *opt="") const;
-    virtual void Clear(Option_t *opt="");
-
-  private:
-    virtual int Charge() const { return 0; }
-
-    short frf;
-    short fobj;
-    short fxfp;
-    short fsi;
-    short ftac_obj;
-    short ftac_xfp;
-
-  ClassDef(TTof,1);
 };
 
 class TCrdc : public TDetectorHit {
@@ -120,7 +82,7 @@ class TCrdc : public TDetectorHit {
     short GetTime()  { return time;  }
     float GetTimeRand()  { return ((float)(time)+gRandom->Uniform());  }
 
-    int  Size()        const { return channel.size(); }
+    int  GetSize()        const { return channel.size(); }
     int  GetNSamples() const { return sample.size(); }
 
     void SetId(short id)    { fId = id;  }
@@ -128,13 +90,13 @@ class TCrdc : public TDetectorHit {
     void SetTime(short ti)  {time = ti;  }
 
 
-    int  Address(int i) const { return TDetectorHit::Address() + channel.at(i); }
+    int  GetAddress(int i) const { return TDetectorHit::GetAddress() + channel.at(i); }
     void AddPoint(int chan,int samp,int dat) { channel.push_back(chan);
                                                sample.push_back(samp);
                                                data.push_back(dat);    }
-    int GetChannel(int i) const    { if(i>=Size()) return -1; return channel.at(i);    }
-    int GetSample(int i)  const    { if(i>=Size()) return -1; return sample.at(i);     }
-    int GetData(int i)    const    { if(i>=Size()) return -1; return data.at(i);       }
+    int GetChannel(int i) const    { if(i>=GetSize()) return -1; return channel.at(i);    }
+    int GetSample(int i)  const    { if(i>=GetSize()) return -1; return sample.at(i);     }
+    int GetData(int i)    const    { if(i>=GetSize()) return -1; return data.at(i);       }
 
     int GetWidth();
 
@@ -147,6 +109,9 @@ class TCrdc : public TDetectorHit {
     int GetMaxPadFast() const;
     int GetMaxPadSum() const;
 
+    double GetDrifttime() const { return fDrifttime; }
+    void SetDrifttime(double drifttime) { if(fDrifttime < 10) fDrifttime = drifttime; }
+
     virtual void Copy(TObject&) const;
     virtual void Print(Option_t *opt="") const;
     virtual void Clear(Option_t *opt="");
@@ -154,7 +119,7 @@ class TCrdc : public TDetectorHit {
     int Sum() const { int result = 0; for(unsigned int x=0;x<data.size();x++) result +=data[x]; return result; }
 
   private:
-    virtual int Charge() const { return 0; }
+    virtual int GetCharge() const { return 0; }
 
     bool IsGoodSample(int i) const;
 
@@ -167,41 +132,9 @@ class TCrdc : public TDetectorHit {
     unsigned short time;
     mutable bool has_cached_dispersive_x; //!
     mutable double cached_dispersive_x; //!
+    double fDrifttime;
 
   ClassDef(TCrdc,1)
-};
-
-
-class TScintillator : public TDetectorHit {
-  public:
-    TScintillator();
-    ~TScintillator();
-
-    void SetID(int id)         { fID=id; }
-    void SetdE_Up(float de)    { fdE_up     = de; }
-    void SetdE_Down(float de)  { fdE_down   = de; }
-    void SetTime_Up(float t)   { fTime_up   = t; }  // tdc
-    void SetTime_Down(float t) { fTime_down = t; }  // tdc
-
-    int GetID()         { return fID;        }
-    float GetEUp()      { return fdE_up;     }
-    float GetEDown()    { return fdE_down;   }
-    float GetTimeUp()   { return fTime_up;   }
-    float GetTimeDown() { return fTime_down; }
-
-    virtual void Copy(TObject&) const;
-    virtual void Print(Option_t *opt="") const;
-    virtual void Clear(Option_t *opt="");
-
-  private:
-    virtual int Charge() const { return 0; }
-    int fID;
-    float fdE_up;
-    float fdE_down;
-    float fTime_up;
-    float fTime_down;
-
-    ClassDef(TScintillator,1)
 };
 
 class TIonChamber : public TDetectorHit {
@@ -211,19 +144,19 @@ class TIonChamber : public TDetectorHit {
 
     void Set(int ch, int data); // { fChan.push_back(ch); fData.push_back(data); }
 
-    int GetChannel(int i) const { if(i>=Size()) return -1; return fChan.at(i); }
-    int GetData(int i)    const { if(i>=Size()) return -1; return fData.at(i); }
-    int Size() const { return fChan.size(); }
+    int GetChannel(int i) const { if(i>=GetSize()) return -1; return fChan.at(i); }
+    int GetData(int i)    const { if(i>=GetSize()) return -1; return fData.at(i); }
+    int GetSize() const { return fChan.size(); }
     float GetdE(TCrdc *);
     float GetdE(double crdc_1_x, double crdc_1_y);
     float GetSum() const;
     float GetAve();
 
-    int  Address(int i) const { return TDetectorHit::Address() + GetChannel(i); }
+    int  GetAddress(int i) const { return TDetectorHit::GetAddress() + GetChannel(i); }
 
 
     float GetCalData(int i) const {
-      TChannel *c = TChannel::GetChannel(Address(i));
+      TChannel *c = TChannel::GetChannel(GetAddress(i));
       if(c){
         return c->CalEnergy(GetData(i));
       }else{
@@ -234,8 +167,8 @@ class TIonChamber : public TDetectorHit {
     virtual void Copy(TObject&) const;
     virtual void Print(Option_t *opt="") const;
     virtual void Clear(Option_t *opt="");
-    int Charge() const { int sum=0;for(int i=0;i<Size();i++)sum+=GetData(i);return sum;}
-    //int GetSum() const { int sum=0;for(int i=0;i<Size();i++)sum+=GetData(i);return sum;}
+    int GetCharge() const { int sum=0;for(int i=0;i<GetSize();i++)sum+=GetData(i);return sum;}
+    //int GetSum() const { int sum=0;for(int i=0;i<GetSize();i++)sum+=GetData(i);return sum;}
   private:
 
 
@@ -243,70 +176,6 @@ class TIonChamber : public TDetectorHit {
     std::vector<int> fData;
     //float            fdE;   //!          Average of all fData.
     ClassDef(TIonChamber,1)
-};
-
-
-
-
-
-
-// ----------- ?? OLD ?? -----------
-
-
-class TTOFHit :  public TS800Channel {
-  public:
-    TTOFHit()  {  }
-    TTOFHit(const TTOFHit &tof) : TS800Channel(tof) { tof.Copy(*this); }
-    TTOFHit(short value) : TS800Channel(value)          {  }
-    TTOFHit(unsigned short value) : TS800Channel(value) {  }
-    //TTOFHit(char *data,int size);
-    ~TTOFHit() {  }
-
-    bool IsRF_tdc( ) {return GetId() == 0x000c;}
-    bool IsOBJ_tdc() {return GetId() == 0x000d;}
-    bool IsOBJ_tac() {return GetId() == 0x0005;}
-    bool IsXFP_tac() {return GetId() == 0x000e;}
-    bool IsXFP_tdc() {return GetId() == 0x0004;}
-    bool IsSI_tdc()  {return GetId() == 0x000f;}
-
-    virtual void Clear(Option_t *opt="")       { TS800Channel::Clear(opt);              }
-    virtual void Print(Option_t *opt="") const { printf("TOF");TS800Channel::Print(opt);}
-    virtual void Copy(TObject &obj)      const { TS800Channel::Copy(obj);             }
-
-  ClassDef(TTOFHit,1);
-};
-
-
-class TFPScint :  public TS800Channel {
-  public:
-    TFPScint()  {  }
-    TFPScint(const TFPScint &fpscint) : TS800Channel(fpscint) { fpscint.Copy(*this); }
-    TFPScint(short charge,short time):TS800Channel(charge),fTime((unsigned short)time) {  }
-    TFPScint(unsigned short charge,unsigned short time):TS800Channel(charge),fTime(time) {  }
-    //TFPScint(char *data,int size);
-    ~TFPScint() {  }
-
-    void SetCharge(short chg) { Set(chg);     }
-    void SetTime(short time)  { fTime = time; }
-
-
-
-    bool IsE1up()   {return GetId() == 0x0000;}
-    bool IsE1down() {return GetId() == 0x0001;}
-    bool IsE2up()   {return GetId() == 0x0002;}
-    bool IsE2down() {return GetId() == 0x0003;}
-    bool IsE3up()   {return GetId() == 0x0004;}
-    bool IsE3down() {return GetId() == 0x0005;}
-
-    short GetTime() const { return fTime&0x0fff; }
-
-    virtual void Clear(Option_t *opt="")       { TS800Channel::Clear(opt); fTime = 0;   }
-    virtual void Print(Option_t *opt="") const { printf("FPScint");TS800Channel::Print(opt);}
-    virtual void Copy(TObject &obj)      const { TS800Channel::Copy(obj);  }
-  private:
-
-   unsigned short fTime;
-  ClassDef(TFPScint,1);
 };
 
 class THodoHit : public TDetectorHit{
@@ -321,7 +190,7 @@ class THodoHit : public TDetectorHit{
 
     void SetChannel(int channel) { fChannel = channel;}
 
-    int GetCharge() const { return Charge(); }
+    int GetCharge() const { return GetCharge(); }
     int GetChannel() const { return fChannel; }
   private:
     int fChannel;
@@ -340,7 +209,7 @@ class THodoscope : public TDetectorHit {
     virtual void Clear(Option_t *opt="");
     void InsertHit(const TDetectorHit&);
 
-    int  Address(int i) const { return TDetectorHit::Address() + GetChannel(i); }
+    int  GetAddress(int i) const { return TDetectorHit::GetAddress() + GetChannel(i); }
 
     int GetChannel(int i) const { return GetHodoHit(i).GetChannel();}
     TDetectorHit& GetHit(int i);
@@ -348,14 +217,13 @@ class THodoscope : public TDetectorHit {
     const THodoHit& GetHodoHit(int i) const;
     std::vector<THodoHit> GetHodoHits() const { return hodo_hits; } ;
 
-    size_t Size() const { return hodo_hits.size(); }
+    size_t GetSize() const { return hodo_hits.size(); }
 
     std::vector<THodoHit> hodo_hits;
 
     ClassDef(THodoscope, 1);
 
 };
-
 
 class TMTof : public TDetectorHit {
   public:
@@ -377,12 +245,6 @@ class TMTof : public TDetectorHit {
     int HodoSize()       const { return fHodoscope.size(); }
     int RefSize()        const { return fRef.size(); }
 
-    //Legacy function - Use GetCorrelatedTof instead
-    //Determines correlated time-of-flights for multi-hit TDC's based on TARGET_MTOF_# GValues. 
-    //values are set in TMTof as fCorrelatedXfp fCorrelatedXfp, etc.
-    double  GetCorrelatedXfpE1()  const;   //
-    double  GetCorrelatedObjE1()  const;   //
-
     //Generic correlated Time of flight functions, for multihit TDC's, can
     double GetCorrelatedTof(int ch1, int ch2, double target, double shift) const;
     double GetCorrelatedTof(std::string ch1, std::string ch2, double target, double shift) const;
@@ -390,10 +252,7 @@ class TMTof : public TDetectorHit {
     std::vector<unsigned short> GetMTofVectorFromString(std::string) const;
     std::vector<unsigned short> GetMTofVector(int i = 15) const;
 
-
   private:
-    mutable double fCorrelatedXFPE1;   //
-    mutable double fCorrelatedOBJE1;   //
 
   public:
     std::vector<unsigned short> fE1Up;         // Channel 0
@@ -405,45 +264,9 @@ class TMTof : public TDetectorHit {
     std::vector<unsigned short> fCrdc2Anode;   // Channel 7
     std::vector<unsigned short> fHodoscope;    // Channel 12
     std::vector<unsigned short> fRef;          // Channel 15, same as E1Up (different cable.)
-    virtual Int_t Charge() const  {return 0;}
+    virtual Int_t GetCharge() const  {return 0;}
   ClassDef(TMTof,1)
 };
-
-
-class TCrdcPad : public TDetectorHit {
-
-  public:
-    TCrdcPad();
-    TCrdcPad(int chan);
-    ~TCrdcPad();
-
-    virtual Int_t Charge() const;
-    void SetChannel(short chan)         { fChannel = chan; }
-    void SetPoint(short sample,short value) {
-      if(fNumSamples >= MAXCRDC){
-        printf("fNumSamples = %i\n",fNumSamples); fflush(stdout);
-      }
-      fSample[fNumSamples] = sample;
-      fValue[fNumSamples] = value;
-      fNumSamples++;
-
-    }
-    //int  GetPoint(int sample)           { if(fTrace.count(sample)) return fTrace.at(sample); else return 0; }
-    short GetChannel() const              { return fChannel; }
-
-    virtual void Clear(Option_t *opt="");
-    virtual void Print(Option_t *opt="") const;
-    virtual void Copy(TObject &obj)      const;
-
-  private:
-    short fChannel;
-    short fNumSamples;
-    short fSample[MAXCRDC];
-    short fValue[MAXCRDC];
-
-  ClassDef(TCrdcPad,1)
-};
-
 
 class TS800Hit : public TDetectorHit {
   public:
