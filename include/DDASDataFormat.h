@@ -97,16 +97,19 @@ public:
   unsigned int GetTimeLow()        const { return header->time_low;                                    }
   unsigned int GetTimeHigh()       const { return (header->time_high_cfd & LOWER16BITMASK);            }
 
-  unsigned long GetTimestamp()       const {
+  double GetTsUnit() 		   const {
     if(header->frequency == 100) {
-      return ((((unsigned long)GetTimeHigh())<<32) + GetTimeLow()) * 10;
+      return 10.0;
     } else if(header->frequency == 250) {
-      return ((((unsigned long)GetTimeHigh())<<32) + GetTimeLow()) * 8;
+      return 8.0;
     } else if(header->frequency == 500) {
-      return ((((unsigned long)GetTimeHigh())<<32) + GetTimeLow()) * 10;
+      return 10.0;
     } else {
-      return ((((unsigned long)GetTimeHigh())<<32) + GetTimeLow()) * 10;
+      return 10.0;
     }
+  }
+  unsigned long GetTimestamp()       const {
+    return ((((unsigned long)GetTimeHigh())<<32) + GetTimeLow());
   }
 
   int GetCFDTrig()     const {
@@ -145,8 +148,9 @@ public:
     }
   }
 
-  double GetTime()          const { return (static_cast<double>(GetTimestamp()) + GetCFDTime());       }
+  double GetTime()          const { return (static_cast<double>(GetTimestamp())*GetTsUnit() + GetCFDTime());       }
 
+  bool IsOverflow()		   const { return ((header->energy_tracelength & 0xF000) == 0xF000); }
   int GetEnergy()                  const { return (header->energy_tracelength & LOWER16BITMASK);       }
   int GetTraceLength()             const { return (header->energy_tracelength & BIT30TO16MASK) >> 16; }
   int GetTraceOverflow()           const { return (header->energy_tracelength & BIT31MASK) >> 31; }
@@ -162,15 +166,7 @@ public:
 					   else return -2;					       }
   unsigned long GetExtTimestamp()  const {
     if(HasExternalClock()) {
-      if(header->frequency == 100) {
-        return ((((unsigned long)GetExtHigh())<<32) + GetExtLow()) * 10;
-      } else if(header->frequency == 250) {
-        return ((((unsigned long)GetExtHigh())<<32) + GetExtLow()) * 8;
-      } else if(header->frequency == 500) {
-        return ((((unsigned long)GetExtHigh())<<32) + GetExtLow()) * 10;
-      } else {
-        return ((((unsigned long)GetExtHigh())<<32) + GetExtLow()) * 10;
-      }
+      return ((((unsigned long)GetExtHigh())<<32) + GetExtLow());
     } else return 0;
   }
 

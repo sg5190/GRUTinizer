@@ -9,6 +9,7 @@
 #include "TMath.h"
 #include "TStopwatch.h"
 
+using namespace std::chrono;
 
 int TFastScint::errors;
 
@@ -52,16 +53,16 @@ void TFastScint::Print(Option_t *opt) const {
 }
 
 int TFastScint::BuildHits(std::vector<TRawEvent>& raw_data){
-  //static TStopwatch sw;
-  //sw.Start();
+//  static TStopwatch sw;
+//  sw.Start();
   for(auto& event : raw_data){
     //TNSCLEvent& nscl = (TNSCLEvent&)event;
     SetTimestamp(event.GetTimestamp());
     errors+=Build_From(event);
   }
   std::sort(fs_hits.begin(),fs_hits.end());
-  //std::cout << "sw.CpuTime\t" << sw.CpuTime() << std::endl;
-  //sw.Continue();
+//  std::cout << "sw.CpuTime\t" << sw.CpuTime() << std::endl;
+//  sw.Continue();
   return (int)Size();
 }
 
@@ -120,6 +121,7 @@ void TFastScint::SetRefTime(int refTime){
 
 // This is where the unpacking happens:
 int TFastScint::Build_From(TRawEvent &event){
+//  auto start = high_resolution_clock::now();
 
   //event.Print("all");
 
@@ -172,6 +174,7 @@ int TFastScint::Build_From(TRawEvent &event){
     } else if(Mword->isData()){ // Data
       // Both qdc and tdc have channel in same spot, and I want the channel now
       unsigned int address = (12<<24) + ((TRawEvent::M_QDC_Data*)(Mword))->Chan();
+      if (((TRawEvent::M_QDC_Data*)(Mword))->Chan() == 0 && (Mword->tail & 0xFFFF) == 0xFFFF) continue;
       TFastScintHit *hit = FindHit(address);
       if(isQ){ // QDC:
         // NOTE -> we do it this way bc QDC should always come first!!!!
@@ -224,6 +227,11 @@ int TFastScint::Build_From(TRawEvent &event){
       }
     }
   }
+
+//  auto stop = high_resolution_clock::now();
+//  auto duration = duration_cast<nanoseconds>(stop - start);
+//  std::cout << "Time taken by MaxPad: " << duration.count() << " microseconds" << std::endl;
+
 //  data+=1;
 
   //if(Zero_Suppress) {

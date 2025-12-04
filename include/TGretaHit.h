@@ -121,24 +121,16 @@ public:
   void BuildFrom(TSmartBuffer& raw);
 
 
-  Double_t GetTime()             const { return ((double)GetTimestamp() + (double)fWalkCorrection)*10.; } //Return Time in ns
-  Float_t  GetT0()               const { return fWalkCorrection; }
-  Float_t  GetTFit()             const { return fWalkCorrection - fTOffset; }
-  Float_t  GetTOffset()          const { return fTOffset; }
-
+  Double_t GetTime()             const { return ((double)GetTimestamp() + (double)fT0)*10.; } //Return Time in ns
+  Float_t  GetT0()               const { return fT0; }
   Int_t    GetCrystalId()        const { return fCrystalId;      }
   Int_t    GetHoleNumber()       const { return fCrystalId/4-1;  }
   Int_t    GetCrystalNumber()    const { return fCrystalId%4;    }
-  Int_t    GetArrayNumber()      const { return 4*(GetDetnum() - 1) + GetCrystalNumber(); }
   Int_t    GetSpecOrder()        const;
   Int_t    GetInverseSpecOrder() const;
-  Float_t  GetCoreEnergy()       const;
-  Int_t    GetCoreCharge(int i)  const { return fCoreCharge[i];  }
-  Float_t  GetCoreEnergy(int i)  const;
   Float_t  GetBaseline()	 const { return fBaseline; 	  }
   Float_t  GetPoststep()	 const { return fPoststep;	  }
   Float_t  GetPrestep()		 const { return fPrestep;	  }
-  virtual Int_t Charge()         const { return GetCoreCharge(3); }
   Float_t  GetChi2()		 const { return fChisq;           }
   Float_t  GetNormChi2()	 const { return fNormChisq;       }
   Int_t GetPad()                 const { return fPad; }
@@ -168,24 +160,22 @@ public:
 
   Int_t Compare(const TObject *obj) const {
     TGretaHit *other = (TGretaHit*)obj;
-    if(this->GetCoreEnergy()>other->GetCoreEnergy())
+    if(this->GetEnergy()>other->GetEnergy())
       return -1;
-    else if(this->GetCoreEnergy()<other->GetCoreEnergy())
+    else if(this->GetEnergy() < other->GetEnergy())
       return 1;  //sort largest to smallest.
     return 0;
   }
 
   bool HasInteractions() { return !fSegments.empty(); }
 
-  bool operator<(const TGretaHit &rhs) const { return fCoreEnergy > rhs.fCoreEnergy; }
+  bool operator<(const TGretaHit &rhs) const { return GetEnergy() > rhs.GetEnergy(); }
 
-  double GetDoppler(double beta,const TVector3 *vec=0,int EngRange=-1) const;
+  double GetDoppler(double beta,const TVector3 *vec=0) const;
 
-  double GetDopplerYta(double beta , double yta, const TVector3 *vec=0, int EngRange =-1) const;
-  double GetDopplerYta(double beta , double yta, double target_x_shift, double target_y_shift, double target_z_shift, const TVector3 *vec=0, int EngRange =-1) const;
+  double GetDopplerYta(double beta , double yta, const TVector3 *vec=0) const;
+  double GetDopplerYta(double beta , double yta, double target_x_shift, double target_y_shift, double target_z_shift, const TVector3 *vec=0) const;
 
-
-  Int_t    NumberOfInteractions()        const { return fNumberOfInteractions; }
   Int_t    GetNSegments()                const { return (int)fSegments.size(); }
   Int_t    GetSegmentId(int i=-1)        const { if(i>=GetNSegments()||GetNSegments()==0) return -1;
                                                  if(i==-1) return fSegments.at(0).fSeg;
@@ -203,46 +193,39 @@ public:
   TVector3 GetCrystalPosition()           const;
 
   void NNAdd(const TGretaHit& other);
-  void SetCoreEnergy(float temp) const { fCoreEnergy = temp; }
   void SetABDepth(int ab) const { fAB = ab; }
   void TrimSegments(int type); // 0: drop multiple ident int pnts.  1: make into wedge "data"
   bool IsClean() const { return !fPad; }
 
 private:
-/* All possible decomp information and
- * where is is stored:
- * -------------------
-  Int_t     type;       // endiness identifier; droppped.
-  Int_t     crystal_id; //                                      -> TGreintaHit.fCrystalId
-  Int_t     num;        // number of interactions of error code -> TGreintaHit.fNumberOfINteractions
-  Float_t   tot_e;      // energy used for decomp               -> TGretaHit.fCoreEnergy
-  Int_t     core_e[4];  // charge reported at dig for each gain -> TGretaHit.fCoreCharge[4]
-  Long_t    timestamp;  // timestamp for the hit                -> TDetectorHit.fTimestamp
-  Long_t    trig_time;  // currently unsed (?)
-  Float_t   t0;         // rise time as reported by decomp      -> TGretaHit.fWalkCorrectrion
-  Float_t   cfd;        // cfd as reported by the dig.          -> TDetectorHit.fTime
-  Float_t   chisq;      // chisq value reported by decomp
-  Float_t   norm_chisq; //
-  Float_t   baseline;   //
-  Float_t   prestep;    // avg trace value before step
-  Float_t   poststep;   // avg trave value after step
-  Int_t     pad;        // decomp error code.
- *------------------
-*/
+/***********************************************************/
+/* All possible decomp information and  where is is stored */
+/* Int_t     type ******************************************/
+/* Int_t     crystal_id  -> TGreintaHit.fCrystalId *********/
+/* Int_t     num         -> TGreintaHit.fSegments.size() ***/
+/* Int_t     core_e[4]   -> TGretaHit.fCoreCharge[4] *******/
+/* Long_t    timestamp   -> TDetectorHit.fTimestamp ********/
+/* Long_t    trig_time *************************************/
+/* Float_t   t0          -> TGretaHit.fT0 ******************/
+/* Float_t   cfd         -> TDetectorHit.fCfd **************/
+/* Float_t   chisq       -> TGretaHit.fChisq ***************/
+/* Float_t   norm_chisq ************************************/
+/* Float_t   baseline    -> TGretaHit.fBaseline ************/
+/* Float_t   prestep     -> TGretaHit.fPrestep *************/
+/* Float_t   poststep    -> TGretaHit.fPoststep ************/
+/* Int_t     pad         -> TGretaHit.fPad *****************/
+/***********************************************************/
 
   Int_t           fCrystalId;
   Int_t           fCoreCharge[4];
   Int_t   	  fPad;
-  Int_t   	  fNumberOfInteractions;
-  mutable Float_t fCoreEnergy;
-  mutable Int_t   fAB;
-  Float_t         fWalkCorrection;   //also called t0.
-  Float_t         fTOffset; //  t0 = toffset + tFit
+  Float_t         fT0;
   Float_t	  fChisq;
   Float_t	  fNormChisq;
   Float_t	  fBaseline;
   Float_t	  fPoststep;
   Float_t	  fPrestep;
+  mutable Int_t   fAB;
 
   std::vector<TGretaHit> fSingles;
   bool fSetFirstSingles = false;

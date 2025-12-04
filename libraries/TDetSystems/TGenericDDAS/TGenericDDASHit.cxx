@@ -16,7 +16,9 @@ TGenericDDASHit::TGenericDDASHit() {
 void TGenericDDASHit::Copy(TObject& obj) const{
   TDetectorHit::Copy(obj);
   TGenericDDASHit& ddas = (TGenericDDASHit&)obj;
-  ddas.fTrace = fTrace;
+  ddas.fExtTime   = fExtTime;
+  ddas.fExtTimeNs = fExtTimeNs;
+  ddas.fTrace     = fTrace;
 }
 
 /*******************************************************************************/

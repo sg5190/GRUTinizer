@@ -15,9 +15,11 @@ public:
 
   std::vector<unsigned short>* GetTrace()     { return &fTrace; }
 
-  void SetTime(double time)            { fTime = time; }
   void SetTrace(unsigned int trace_length, const unsigned short* trace);
-  void SetExtTime(long timestamp)  { fExtTime = timestamp; }
+  void SetExtTime(long timestamp, double tsunit)  {
+    fExtTime   = timestamp;
+    fExtTimeNs = timestamp * tsunit;
+  }
 
   virtual Int_t Charge() const;
 
@@ -29,6 +31,7 @@ public:
   protected:
     std::vector<unsigned short> fTrace;
     long fExtTime;
+    long fExtTimeNs;
   ClassDef(TGenericDDASHit,4);
 };
 

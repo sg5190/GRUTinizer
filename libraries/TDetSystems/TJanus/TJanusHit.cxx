@@ -24,6 +24,7 @@ void TJanusHit::Copy(TObject& obj) const {
   janus.fRing       = fRing;
   janus.fSector     = fSector;
   janus.fBackCharge = fBackCharge;
+  janus.fOver = fOver;
 }
 
 /*******************************************************************************/
@@ -31,6 +32,10 @@ void TJanusHit::Copy(TObject& obj) const {
 /*******************************************************************************/
 void TJanusHit::Clear(Option_t* opt) {
   TDetectorHit::Clear(opt);
+  fRing = -1;
+  fSector = -1;
+  fBackCharge = -1;
+  fOver = 0;
 }
 
 /*******************************************************************************/
@@ -61,14 +66,14 @@ TVector3 TJanusHit::GetPosition(bool smear, bool apply_array_offset) const {
 /* Return Detector Z position **************************************************/
 /*******************************************************************************/
 double TJanusHit::GetDefaultDistance() const {
-  if(GetDetnum() == 0) return -3.2;
-  else return 2.8;
+  if(GetDetnum() == 0) return -32.;
+  else return 28.;
 }
 
 /*******************************************************************************/
 /* Uncalibrated Energies - ignores overflows by making them < 0 ****************/
 /*******************************************************************************/
-Int_t TJanusHit::Charge() const {
+Int_t TJanusHit::GetCharge() const {
   if(fCharge > 60000) {
     return fCharge - 70000;
   } else {
@@ -79,7 +84,7 @@ Int_t TJanusHit::Charge() const {
 /*******************************************************************************/
 /* Uncalibrated "Back Energy" only valid if hit has ring + sector information **/
 /*******************************************************************************/
-Double_t TJanusHit::BackCharge() const {
+Double_t TJanusHit::GetBackCharge() const {
   if(fBackCharge > 60000) {
     return fBackCharge - 70000;
   } else {

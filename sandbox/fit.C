@@ -69,11 +69,13 @@ vector<float> fitCentroids() {
     Int_t bin = tmpHist->GetXaxis()->FindBin(xp);
     Double_t yp = tmpHist->GetBinContent(bin);
     GGaus *tmpP = new GGaus(xp - fitwidth, xp + fitwidth, "Q && no-print");
-    tmpP->Fit(tmp1D,"Q && no-print");
+    tmpP->Fit(tmp1D,"");
+//    tmpP->Fit(tmp1D,"Q && no-print");
     en.push_back(tmpP->GetParameter(1));
     gr->SetPoint(i, i, tmpP->GetParameter(1));
     gr->SetPointError(i, 0, tmpP->GetParError(1));
-cout << tmpP->GetParameter(1) << "\t" <<  tmpP->GetParError(1) << endl;
+    cout << tmpP->GetParameter(1) << "\t" <<  tmpP->GetParError(1) << endl;
+    cout << tmpP->GetArea() << "\t" <<  tmpP->GetSum() << endl;
   }
   gr->Draw("A*");
   return en;

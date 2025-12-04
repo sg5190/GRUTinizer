@@ -34,7 +34,6 @@ TCaesar::~TCaesar(){ }
 /* AddbackDepth classifies events as, n0 (0), n1 (1), n2 (2) or ng (3) *********/
 /*******************************************************************************/
 void TCaesar::BuildAddback(int SortDepth) const {
-//  auto start = high_resolution_clock::now();
   //Don't rebuild events
   if( addback_hits.size() > 0 || caesar_hits.size() == 0) {
     return;
@@ -56,51 +55,38 @@ void TCaesar::BuildAddback(int SortDepth) const {
 
   //vector used to store hit indices when crystals are pairs
   std::vector<int> paired;
-//  int checkCount = 0;
   //loop through every hit
-//  int tsize =  temp_hits.size();
-//  std::cout << "Start" << std::endl;
   for(unsigned int i=0; i < temp_hits.size(); i++) {
-//    std::cout << i << "\t" << temp_hits[i].GetEnergy() << "\t" << temp_hits[i].GetChannel() << std::endl;
     paired.clear();
     TCaesarHit &current_hit = temp_hits[i];
     //only pick unqiue pairs of hits
     if(SortDepth > 1) {
       for(unsigned int j=i+1; j < temp_hits.size(); j++) {
-//	checkCount++;
         if (IsNeighbour(current_hit,temp_hits[j])){
           paired.push_back(j);
           //check every hit k to see if it is a neighbour with j
           if(SortDepth > 2) {
-            for (unsigned int k=0; k < temp_hits.size(); k++){
-//            for (unsigned int k=j+1; k < temp_hits.size(); k++){
+            for (unsigned int k=i; k < temp_hits.size(); k++){
               if( (i == k) || (j == k) ) continue;
-//	checkCount++;
               if (IsNeighbour(temp_hits[j],temp_hits[k])){
                 paired.push_back(k);
                 //Edge cases, requires at least 4 crystals in a line
                 if(SortDepth > 3) {
-                  for (unsigned int l=0; l < temp_hits.size(); l++){
-//                  for (unsigned int l=k+1; l < temp_hits.size(); l++){
+                  for (unsigned int l=i; l < temp_hits.size(); l++){
                     if( (i == l) || (j == l) || (k == l)) continue;
-//	checkCount++;
                     if (IsNeighbour(temp_hits[k],temp_hits[l])) {
                       paired.push_back(l);
                       //Really Edge cases, requires at least 5 crystals in a line
                       if(SortDepth > 4) {
-                        for (unsigned int m=0; m < temp_hits.size(); m++){
-//                        for (unsigned int m=l+1; m < temp_hits.size(); m++){
+                        for (unsigned int m=i; m < temp_hits.size(); m++){
                           if( (i == m) || (j == m) || (k == m) || (l == m)) continue;
-//	checkCount++;
                           if(IsNeighbour(temp_hits[l],temp_hits[m])) {
                             paired.push_back(m);
                             //Extreme Edge cases, requires at least 6 crystals in a line
                             if(SortDepth > 5) {
-                              for (unsigned int n=0; n < temp_hits.size(); n++){
-//                              for (unsigned int n=m+1; n < temp_hits.size(); n++){
+                              for (unsigned int n=i; n < temp_hits.size(); n++){
                                 if( (i == n) || (j == n) || (k == n) || (l == n) || (m == n)) continue;
-// 	checkCount++;
-                               if(IsNeighbour(temp_hits[m],temp_hits[n])) paired.push_back(n);
+                                if(IsNeighbour(temp_hits[m],temp_hits[n])) paired.push_back(n);
                               }
                             }
                           }
@@ -150,7 +136,6 @@ void TCaesar::BuildAddback(int SortDepth) const {
         }
       }
     } else { //ng
-//std::cout << paired.size() << std::endl;
       addback_hits.push_back(current_hit);
       addback_hits.back().SetABDepth(3);
       for(int p = 0; p < (int)paired.size(); p++) {
@@ -161,12 +146,6 @@ void TCaesar::BuildAddback(int SortDepth) const {
       }
     }
   }
-//  if(tsize > 2) std::cout << tsize << "\t" << checkCount << "\t" << paired.size() << std::endl;
-
-//  auto stop = high_resolution_clock::now();
-//  auto duration = duration_cast<nanoseconds>(stop - start);
-//  std::cout << "Time taken by Fast function: " << duration.count() << " microseconds" << std::endl;
-
   return;
 }
 
@@ -203,17 +182,14 @@ TDetectorHit& TCaesar::GetHit(int i){
 /* Unpacks  data and builds TCaesar events *************************************/
 /*******************************************************************************/
 int TCaesar::BuildHits(std::vector<TRawEvent>& raw_data) {
-//  auto start = high_resolution_clock::now();
   //Loop over raw data
   for(auto& event : raw_data){
     TSmartBuffer buf = event.GetPayloadBuffer();
-//buf.Print("all");
     nsize = buf.GetSize();
     const char *data = buf.GetData();
 
     const TRawEvent::VMUSB_Header* vmusb_header = (TRawEvent::VMUSB_Header*)data;
     data += sizeof(TRawEvent::VMUSB_Header);
-//std::cout <<  sizeof(TRawEvent::VMUSB_Header) << " " << sizeof(TRawEvent::VME_Timestamp) << std::endl;
     data += 2;
     const  TRawEvent::VME_Timestamp* vme_timestamp = (TRawEvent::VME_Timestamp*)data;
     data += sizeof(TRawEvent::VME_Timestamp);
@@ -260,9 +236,6 @@ int TCaesar::BuildHits(std::vector<TRawEvent>& raw_data) {
     }
     fSize++;
   }
-//  auto stop = high_resolution_clock::now();
-//  auto duration = duration_cast<nanoseconds>(stop - start);
-//  std::cout << "Time taken by Fast function: " << duration.count() << " microseconds" << std::endl;
   return GetSize();
 }
 
@@ -391,7 +364,6 @@ void TCaesar::LoadDetectorPositions() {
     //Parse the line
     int ringN, detN, adcN, chN;
     double x,y,z;
-//    int extracted = sscanf(line.c_str(),"det.%02d.%6s: %lf %lf %lf", &detnum,name_c,&x,&y,&z);
     int extracted = sscanf(line.c_str(),"%i\t%i\t%i\t%i\t%lf\t%lf\t%lf", &ringN, &detN, &adcN, &chN, &x, &y, &z);
     if (extracted!=7) {
       continue;
@@ -411,4 +383,3 @@ void TCaesar::InsertHit(const TDetectorHit& hit) {
   caesar_hits.emplace_back((TCaesarHit&)hit);
   fSize++;
 }
-

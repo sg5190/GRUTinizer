@@ -53,6 +53,7 @@ void TDetectorHit::Copy(TObject& obj) const {
   hit.fCharge = fCharge;
   hit.fTime = fTime;
   hit.fTimestamp = fTimestamp;
+  hit.fTimestampNs = fTimestampNs;
   hit.fCFD = fCFD;
   hit.fFlags = fFlags;
 }

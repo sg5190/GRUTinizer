@@ -32,7 +32,7 @@ public:
   void SetTime(double time)            { fTime = time; }
   void SetTimestamp(long timestamp, double tsunit = 10.0) {
     fTimestamp = timestamp;
-    fTimestampNs = timestamp * tsunit;
+    fTimestampNs = (long)(timestamp * tsunit);
   }
   void SetCFDTime(double cfd)            { fCFD = cfd; }
 

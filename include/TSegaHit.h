@@ -38,7 +38,6 @@ public:
   void SetCFDFail(int cfdbit) { fCfdFail = cfdbit; }
   int GetCFDFail() const { return fCfdFail; }
 
-//  void SetTime(double time)            { fTime = time; }
   void SetTrace(unsigned int trace_length, const unsigned short* trace);
 
   void SetEnergySumBool(bool sum = false) {fEsum = sum; }

@@ -22,48 +22,20 @@ double TGretaHit::fSmearWidth = 0.2; // 2 mm
 /*******************************************************************************/
 void TGretaHit::Copy(TObject &rhs) const {
   TDetectorHit::Copy(rhs);
-  ((TGretaHit&)rhs).fWalkCorrection = fWalkCorrection;
+  ((TGretaHit&)rhs).fT0             = fT0;
   ((TGretaHit&)rhs).fPad            = fPad;
-  ((TGretaHit&)rhs).fTOffset        = fTOffset;
   ((TGretaHit&)rhs).fCrystalId      = fCrystalId;
-  ((TGretaHit&)rhs).fCoreEnergy     = fCoreEnergy;
   ((TGretaHit&)rhs).fCoreCharge[0]  = fCoreCharge[0];
   ((TGretaHit&)rhs).fCoreCharge[1]  = fCoreCharge[1];
   ((TGretaHit&)rhs).fCoreCharge[2]  = fCoreCharge[2];
   ((TGretaHit&)rhs).fCoreCharge[3]  = fCoreCharge[3];
-  ((TGretaHit&)rhs).fNumberOfInteractions = fNumberOfInteractions;
   ((TGretaHit&)rhs).fSegments       = fSegments;
-  ((TGretaHit&)rhs).fAB	      = fAB;
+  ((TGretaHit&)rhs).fAB	            = fAB;
   ((TGretaHit&)rhs).fChisq          = fChisq;
   ((TGretaHit&)rhs).fNormChisq      = fNormChisq;
-  ((TGretaHit&)rhs).fBaseline	      = fBaseline;
-  ((TGretaHit&)rhs).fPrestep	      = fPrestep;
-  ((TGretaHit&)rhs).fPoststep	      = fPoststep;
-}
-
-/*******************************************************************************/
-/* Returns core energy from mode2 data and performs a calibration if ***********/
-/* a channels.cal file is provided *********************************************/
-/* If it is an addback event (abdepth => 0) do not calibrate again *************/
-/*******************************************************************************/
-Float_t TGretaHit::GetCoreEnergy() const {
-  TChannel *channel = TChannel::GetChannel(GetAddress());
-  if(!channel) return fCoreEnergy;
-  if(GetABDepth() < 0) return channel->CalEnergy(fCoreEnergy);
-  else return fCoreEnergy;
-}
-
-/*******************************************************************************/
-/* Selects charge from different gain ranges and performs a calibration if *****/
-/* a channels.cal file is provided *********************************************/
-/* If it is an addback event (abdepth => 0) do not calibrate again *************/
-/*******************************************************************************/
-Float_t TGretaHit::GetCoreEnergy(int i) const {
-  float charge = (float)GetCoreCharge(i) + gRandom->Uniform();
-  TChannel *channel = TChannel::GetChannel(GetAddress()+(i<<4));
-  if(!channel) return charge;
-  if(GetABDepth() <0) return channel->CalEnergy(charge);
-  else return charge;
+  ((TGretaHit&)rhs).fBaseline	    = fBaseline;
+  ((TGretaHit&)rhs).fPrestep	    = fPrestep;
+  ((TGretaHit&)rhs).fPoststep	    = fPoststep;
 }
 
 /*******************************************************************************/
@@ -95,9 +67,8 @@ void TGretaHit::BuildFrom(TSmartBuffer& buf){
 
   SetTimestamp(raw.timestamp, 10.);
   SetEnergy(raw.tot_e, false);
-  fWalkCorrection = raw.t0;
+  fT0 = raw.t0;
   fCrystalId = raw.crystal_id;
-  fCoreEnergy = raw.tot_e;
   fAB = -1;
 
   int board_id = ((fCrystalId/4) << 8) ;  //hole  number : 0x1f00
@@ -120,9 +91,8 @@ void TGretaHit::BuildFrom(TSmartBuffer& buf){
   fPrestep = raw.prestep;
   fPoststep = raw.poststep;
 
-  fNumberOfInteractions = raw.num;
   fPad = raw.pad;
-  for(int i=0; i<fNumberOfInteractions; i++) {
+  for(int i=0; i<raw.num; i++) {
     try {
       interaction_point pnt;
       pnt.fSeg = raw.intpts[i].seg;
@@ -135,9 +105,7 @@ void TGretaHit::BuildFrom(TSmartBuffer& buf){
     } catch(...) {
       std::cout << "in try catch block!" << std::endl;
     }
-
   }
-  fTOffset = raw.intpts[MAX_INTPTS-1].z;
   std::sort(fSegments.begin(),fSegments.end());
   //  Print("all");
 }
@@ -179,10 +147,9 @@ TVector3 TGretaHit::GetLocalPosition(unsigned int i) const {
 
 /*******************************************************************************/
 /* Returns doppler corrected energies based on highest energy interaction ******/
-/* point, particle vectors and beam beta. Can select gain range otherwise ******/
-/* uses mode2 energy ***********************************************************/
+/* point, particle vectors and beam beta. **************************************/
 /*******************************************************************************/
-double TGretaHit::GetDoppler(double beta,const TVector3 *vec, int EngRange) const {
+double TGretaHit::GetDoppler(double beta,const TVector3 *vec) const {
   if(GetNSegments()<1)
     return 0.0;
   if(vec==0) {
@@ -202,19 +169,17 @@ double TGretaHit::GetDoppler(double beta,const TVector3 *vec, int EngRange) cons
   gret_pos.SetX(gret_pos.X() - xoffset);
   gret_pos.SetY(gret_pos.Y() - yoffset);
   gret_pos.SetZ(gret_pos.Z() - zoffset);
-  
-  if(EngRange>-1) tmp = GetCoreEnergy(EngRange)*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
-  else tmp = GetEnergy()*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
+
+  tmp = GetEnergy()*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
   return tmp;
 }
 
 /*******************************************************************************/
 /* Returns doppler corrected energies based on highest energy interaction ******/
 /* point, particle vectors and beam beta. Corrects for non-dispersive position */
-/* YTA, calculated using TS800 class. Can select gain range otherwise uses *****/
-/* mode2 energy ****************************************************************/
+/* YTA, calculated using TS800 class. ******************************************/
 /*******************************************************************************/
-double TGretaHit::GetDopplerYta(double beta, double yta, const TVector3 *vec, int EngRange) const {
+double TGretaHit::GetDopplerYta(double beta, double yta, const TVector3 *vec) const {
   if(GetNSegments()<1)
     return 0.0;
   if(vec==0) {
@@ -227,10 +192,10 @@ double TGretaHit::GetDopplerYta(double beta, double yta, const TVector3 *vec, in
   if(std::isnan(yoffset)) yoffset=0.00;
   double zoffset = GValue::Value("TARGET_Z_OFFSET");
   if(std::isnan(zoffset)) zoffset=0.00;
-  return GetDopplerYta(beta, yta, xoffset, yoffset, zoffset, vec, EngRange);
+  return GetDopplerYta(beta, yta, xoffset, yoffset, zoffset, vec);
 }
 
-double TGretaHit::GetDopplerYta(double beta, double yta, double xoffset, double yoffset, double zoffset, const TVector3 *vec, int EngRange) const {
+double TGretaHit::GetDopplerYta(double beta, double yta, double xoffset, double yoffset, double zoffset, const TVector3 *vec) const {
   if(GetNSegments()<1)
     return 0.0;
   if(vec==0) {
@@ -245,8 +210,7 @@ double TGretaHit::GetDopplerYta(double beta, double yta, double xoffset, double 
   gret_pos.SetY(gret_pos.Y() - (yoffset - yta));
   gret_pos.SetZ(gret_pos.Z() - zoffset);
 
-  if(EngRange>-1) tmp = GetCoreEnergy(EngRange)*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
-  else tmp = GetEnergy()*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
+  tmp = GetEnergy()*gamma *(1 - beta*TMath::Cos(gret_pos.Angle(*vec)));
   return tmp;
 }
 
@@ -262,17 +226,15 @@ void TGretaHit::NNAdd(const TGretaHit& rhs) {
     fSetFirstSingles = true;
   }
   SetEnergy((GetEnergy() + rhs.GetEnergy()), true);
-//  fCoreEnergy += rhs.fCoreEnergy;
   fSingles.push_back(rhs);
 
   // S.G. - Does it make sense to add interactions points from other crystal?
   // Fill all interaction points
   for(unsigned int i=0; i<rhs.fSegments.size(); i++){
-    if(fNumberOfInteractions >= MAXHPGESEGMENTS){
+    if(GetNSegments() >= MAXHPGESEGMENTS){
       break;
     }
     fSegments.push_back(rhs.fSegments[i]);
-    fNumberOfInteractions++;
   }
 }
 
@@ -296,9 +258,9 @@ void TGretaHit::Print(Option_t *opt) const {
   std::cout << "\tCrystalNum      \t" << GetCrystalNumber()            << std::endl;
   std::cout << "\tCrystalId:      \t" << GetCrystalId()                << std::endl;
 
-  std::cout << "\tLocal Timestamp:\t" << GetTimestamp()                   << std::endl;
+  std::cout << "\tLocal Timestamp:\t" << GetTimestamp()                << std::endl;
   std::cout << "\tCorrected time: \t" << GetTime()                     << std::endl;
-  std::cout << "\tDecomp Energy:  \t" << fCoreEnergy                   << std::endl;
+  std::cout << "\tDecomp Energy:  \t" << GetEnergy()                   << std::endl;
   if(!strcmp(opt,"all")) {
     for(int i=0;i<4;i++)
       std::cout << "\tCharge[" << i << "]:       \t" << fCoreCharge[i] << std::endl;
@@ -307,7 +269,7 @@ void TGretaHit::Print(Option_t *opt) const {
   std::cout << "\tInteractions:    \t" << fSegments.size()             << std::endl;
 
   if(!strcmp(opt,"all")) {
-    for(int i=0;i<fNumberOfInteractions;i++) {
+    for(int i=0;i<GetNSegments();i++) {
       printf("\t\t");
       fSegments.at(i).Print();
     }
@@ -321,17 +283,14 @@ void TGretaHit::Print(Option_t *opt) const {
 /*******************************************************************************/
 void TGretaHit::Clear(Option_t *opt) {
   TDetectorHit::Clear(opt);
-  fWalkCorrection = sqrt(-1);
+  fT0	          = sqrt(-1);
   fCrystalId      = -1;
-  fCoreEnergy     = sqrt(-1);
   fCoreCharge[0]  = -1;
   fCoreCharge[1]  = -1;
   fCoreCharge[2]  = -1;
   fCoreCharge[3]  = -1;
-  fTOffset = sqrt(-1);
-  fPad  = 0;
-  fNumberOfInteractions = 0;
-  fAB  = -1;
+  fPad            = 0;
+  fAB             = -1;
   fSegments.clear();
 }
 
@@ -352,7 +311,6 @@ void TGretaHit::TrimSegments(int type) {
       fSegments.push_back(*x);
     }
     std::sort(fSegments.begin(),fSegments.end());
-    fNumberOfInteractions = fSegments.size();
   } else if (type==1) {
     std::set<interaction_point,intpnt_compare_wedge> pset;
     for(auto x=fSegments.begin();x!=fSegments.end();x++) {
@@ -364,7 +322,6 @@ void TGretaHit::TrimSegments(int type) {
       fSegments.back().fSeg = (fSegments.back().fSeg%6);
     }
     std::sort(fSegments.begin(),fSegments.end());
-    fNumberOfInteractions = fSegments.size();
   }
 }
 
@@ -385,8 +342,10 @@ TVector3 TGretaHit::GetPosition() const {
 }
 
 /*******************************************************************************/
-/* Remaps crystal ids in order of lowest to highest Theta/Phi depending on the */
-/* channel map provided. Value is equivalent to SpecTcl order ******************/
+/* Remaps crystal ids in order of Theta/Phi position depending on which ********/
+/* crystals are in the data stream. Value is equivalent to SpecTcl Order *******/
+/* Useful for ordering crystals by theta to calculare target offsets using *****/
+/* find_optimal_shifts.C macro or omparing data to SpecTcl *********************/
 /*******************************************************************************/
 Int_t TGretaHit::GetSpecOrder() const {
   return TGreta::GetSpecId(fCrystalId, false);

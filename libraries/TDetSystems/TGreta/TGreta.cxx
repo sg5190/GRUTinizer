@@ -207,8 +207,6 @@ void TGreta::SetCRMAT() {
   }
   SetSegmentCRMAT();
   fCRMATSet = true;
-  //printf("Read %i rotation matrix coefficients.\n", nn);
-  /* Done! */
 }
 
 /*******************************************************************************/

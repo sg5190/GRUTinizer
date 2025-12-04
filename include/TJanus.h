@@ -18,7 +18,6 @@ public:
 //  virtual TJanusHit&    GetJanusHit(int i);
   virtual TDetectorHit& GetHit(int i);
 
-  std::vector<TJanusHit>& GetAllChannels() { return janus_channels; }
   std::vector<TJanusHit>& GetAllHits() { return janus_hits; }
 
   int GetRingSize() { return ring_hits.size(); }
@@ -47,6 +46,7 @@ public:
   char StackTriggered() const { return stack_triggered; }
   int NumPackets() const { return num_packets; }
   int TotalBytes() const { return total_bytes; }
+  int GetMismatch() const { return fMismatch; }
 
   // Allows for looping over all hits with for(auto& hit : janus) { }
   typedef std::vector<TJanusHit>::iterator iterator;
@@ -56,9 +56,8 @@ public:
 private:
   virtual int  BuildHits(std::vector<TRawEvent>& raw_data);
 
-  void Build_VMUSB_Read(TSmartBuffer buf);
+//  void Build_VMUSB_Read(TSmartBuffer buf);
 
-  std::vector<TJanusHit> janus_channels;
   std::vector<TJanusHit> janus_hits;
 
   std::vector<TJanusHit> ring_hits;   	//Vector to store ring hits
@@ -68,6 +67,7 @@ private:
   int num_packets;
   int total_bytes;
 
+  int fMismatch;
   //For geometry
   static int NRing;
   static int NSector;

@@ -12,7 +12,6 @@
 std::map<int,TSega::Transformation> TSega::detector_positions;
 
 #include "chrono"
-using namespace std::chrono;
 /*******************************************************************************/
 /* TSega ***********************************************************************/
 /* Main class for unpacking SeGA in DDAS electronics ***************************/
@@ -53,8 +52,6 @@ TDetectorHit& TSega::GetHit(int i){
 /* Unpacks raw DDAS data and builds TSega events *******************************/
 /*******************************************************************************/
 int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
-//  auto start = high_resolution_clock::now();
-
   long int smallest_timestamp = 0x7fffffffffffffff;
   for(auto& event : raw_data){
     //Get raw data and unpacks it as a DDAS Event (DDASDataFormat.h)
@@ -84,7 +81,7 @@ int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
 	      break;
           }
         } else {
-	  int tdiff = static_cast<int>(ihit.GetTimestamp()-ddas.GetTimestamp());
+	  int tdiff = static_cast<int>(ihit.GetTimestampNs()-ddas.GetTimestamp()*ddas.GetTsUnit());
 	  if(tdiff < 2000 && tdiff > -2000) { //Segments should be within 2us of a core
             hit = &ihit;
       	    break;
@@ -102,10 +99,11 @@ int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
     //Is a core event
     if(segnum==0){
       hit->SetAddress(address);
-      hit->SetTimestamp(ddas.GetTimestamp()); // Timestamp in ns
+      hit->SetTimestamp(ddas.GetTimestamp(), ddas.GetTsUnit()); // Timestamp
       hit->SetTime(ddas.GetTime()); // Timestamp + CFD
       hit->SetCFDTime(ddas.GetCFDTime()); // CFD ONLY
-      hit->SetCFDFail(ddas.GetCFDFailBit());
+      hit->SetCFDFail(ddas.IsOverflow());
+//      hit->SetCFDFail(ddas.GetCFDFailBit());
       if(hit->GetTimestamp()<smallest_timestamp) { smallest_timestamp = hit->GetTimestamp(); }
       hit->SetCharge(ddas.GetEnergy());
       hit->SetTrace(ddas.GetTraceLength(), ddas.trace);
@@ -119,7 +117,7 @@ int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
     } else {  //Segment hit, add to SegmentHit vector
       TSegaSegmentHit& seg = hit->MakeSegmentByAddress(address);
       if(!hit->HasCore()) {
-	hit->SetTimestamp(ddas.GetTimestamp()); //If no core present use segment for Timestamp
+	hit->SetTimestamp(ddas.GetTimestamp(), ddas.GetTsUnit()); //If no core present use segment for Timestamp
         hit->SetTime(ddas.GetTime()); // Timestamp + CFD
         hit->SetCFDTime(ddas.GetCFDTime()); // CFD ONLY
       }
@@ -132,10 +130,6 @@ int TSega::BuildHits(std::vector<TRawEvent>& raw_data) {
   }
   //set the TSeGA  time....
   SetTimestamp(smallest_timestamp);  //fix me pcb
-
-//  auto stop = high_resolution_clock::now();
-//  auto duration = duration_cast<nanoseconds>(stop - start);
-//  std::cout << "Time taken by Fast function: " << duration.count() << " microseconds" << std::endl;
   return GetSize();
 }
 
@@ -147,8 +141,8 @@ TVector3 TSega::GetSegmentPosition(int detnum, int segnum) {
     return TVector3(std::sqrt(-1),std::sqrt(-1),std::sqrt(-1));
   }
 
-  double segment_height = 1.0;
-  double perp_distance = 1.5;
+  double segment_height = 10.;
+  double perp_distance = 15.;
 
   // Middle of the segment
   double segment_phi = 3.1415926535/4.0;
@@ -215,7 +209,7 @@ void TSega::LoadDetectorPositions() {
     std::string name = name_c;
     TVector3 vec = TVector3(x,y,z);
     if (name=="origin") {
-      detector_positions[detnum].origin = vec;
+     detector_positions[detnum].origin = vec;
     } else if (name=="x_vect") {
       detector_positions[detnum].x = vec;
     } else if (name=="y_vect") {

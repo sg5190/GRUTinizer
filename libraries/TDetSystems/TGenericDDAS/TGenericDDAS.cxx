@@ -96,8 +96,8 @@ int TGenericDDAS::BuildHits(std::vector<TRawEvent>& raw_data) {
     TGenericDDASHit hit;
     hit.SetAddress(address);
     hit.SetCharge(ddasevt.GetEnergy());
-    hit.SetTimestamp(ddasevt.GetTimestamp()); // this is now in ns pcb!!
-    hit.SetExtTime(ddasevt.GetExtTimestamp());
+    hit.SetTimestamp(ddasevt.GetTimestamp(), ddasevt.GetTsUnit()); // this is now in ns pcb!!
+    hit.SetExtTime(ddasevt.GetExtTimestamp(), ddasevt.GetTsUnit());
     hit.SetTime(ddasevt.GetTime()); // Timestamp + CFD
     hit.SetCFDTime(ddasevt.GetCFDTime()); // CFD ONLY
     hit.SetTrace(ddasevt.GetTraceLength(), ddasevt.trace);
