@@ -238,17 +238,25 @@ int TS800::BuildHits(std::vector<TRawEvent>& raw_data){
   for(auto& event : raw_data) { // should only be one..
     SetTimestamp(event.GetTimestamp());
     int ptr = 0;
-    const TRawEvent::GEBS800Header *head = ((const TRawEvent::GEBS800Header*)event.GetPayload());
-    ptr += sizeof(TRawEvent::GEBS800Header);
+//    const TRawEvent::GEBS800Header *head = ((const TRawEvent::GEBS800Header*)event.GetPayload());
+//    ptr += sizeof(TRawEvent::GEBS800Header) + 22;
+//    const TRawEvent::GEBS800Header *head = ((const TRawEvent::GEBS800Header*)event.GetPayload());
+    ptr += 64;
     //Here, we are now pointing at the size of the next S800 thing.  Inclusive in shorts.
     unsigned short *data = (unsigned short*)(event.GetPayload()+ptr);
-
+//    std::cout << std::endl;
     size_t x = 0;
-    int hsize = head->total_size - sizeof(TRawEvent::GEBS800Header) + 16;
+    int hsize = event.GetBodySize()/2 - 64;
+//std::cout << event.GetBodySize() << "\t" << event.GetTotalSize() << std::endl;
+//for(int i = 0; i < event.GetBodySize()/2; i++) std::cout << std::hex << *(data + i) << std::dec << "\t";
+//std::cout << std::endl;
+//    int hsize = head->total_size - sizeof(TRawEvent::GEBS800Header) + 16;
+//abort();
     if(hsize < 0) return 0;
     while(x<(size_t)hsize) {  //total size is inclusive.
       int size             = *(data+x);
       unsigned short *dptr = (data+x+1);
+//std::cout << std::hex <<  *(data+x) << "\t" << *(data+x+1) << std::endl;
       x+=size;
       int sizeleft = size-2;
       switch(*dptr) {
@@ -300,7 +308,7 @@ int TS800::BuildHits(std::vector<TRawEvent>& raw_data){
 	return 0;
       };
     }
-    SetEventCounter(head->GetEventNumber());
+//    SetEventCounter(head->GetEventNumber());
     //geb->Print(toprint.c_str());
   }
   return 1;

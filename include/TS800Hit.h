@@ -211,6 +211,7 @@ class THodoscope : public TDetectorHit {
 
     int  GetAddress(int i) const { return TDetectorHit::GetAddress() + GetChannel(i); }
 
+    int GetCharge(int i) const { return GetHodoHit(i).GetCharge();}
     int GetChannel(int i) const { return GetHodoHit(i).GetChannel();}
     TDetectorHit& GetHit(int i);
     THodoHit& GetHodoHit(int i);

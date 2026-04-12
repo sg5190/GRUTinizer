@@ -200,7 +200,15 @@ void TJanus::BuildJanusHit() {
 	if((ring_hits.at(i).GetDetnum() == ring_hits.at(j).GetDetnum()) && (abs(ring_hits.at(i).GetTimestampNs() - ring_hits.at(j).GetTimestampNs()) < TDiff)) {
 	  int dRing = abs(ring_hits.at(i).GetRing() - ring_hits.at(j).GetRing());
 	  if(dRing == 1) {
-	    ring_hits.at(i).SetCharge(ring_hits.at(i).GetCharge() + ring_hits.at(j).GetCharge());
+	    //Sum energy/charge and assign the highest energy hit as the ring number
+	    if(EBuild) {
+	      ring_hits.at(i).SetEnergy(ring_hits.at(i).GetEnergy() + ring_hits.at(j).GetEnergy(), true);
+	      if(ring_hits.at(i).GetEnergy() < ring_hits.at(j).GetEnergy()) ring_hits.at(i).SetRingNumber(ring_hits.at(j).GetRing());
+	    }
+	    else {
+	      ring_hits.at(i).SetCharge(ring_hits.at(i).GetCharge() + ring_hits.at(j).GetCharge());
+	      if(ring_hits.at(i).GetCharge() < ring_hits.at(j).GetCharge()) ring_hits.at(i).SetRingNumber(ring_hits.at(j).GetRing());
+	    }
 	    UR.at(j) = true;
 	    diagnostics[ring_hits.at(i).GetDetnum()%2][4]++;
 	  }
@@ -232,8 +240,16 @@ void TJanus::BuildJanusHit() {
         if(sector_hits.at(j).GetCharge() < UThresh  && !sector_hits.at(j).IsDownstream()) continue;
 	if((sector_hits.at(i).GetDetnum() == sector_hits.at(j).GetDetnum()) && (abs(sector_hits.at(i).GetTimestampNs() - sector_hits.at(j).GetTimestampNs()) < TDiff)) {
 	  int dSector = abs(sector_hits.at(i).GetSector() - sector_hits.at(j).GetSector());
+          //Sum energy/charge and assign the highest energy hit as the sector number
 	  if(dSector == 1 || dSector == NSector) {
-	    sector_hits.at(i).SetCharge(sector_hits.at(i).GetCharge() + sector_hits.at(j).GetCharge());
+            if(EBuild) {
+              if(sector_hits.at(i).GetEnergy() < sector_hits.at(j).GetEnergy()) sector_hits.at(i).SetSectorNumber(sector_hits.at(j).GetSector());
+ 	      sector_hits.at(i).SetEnergy(sector_hits.at(i).GetEnergy() + sector_hits.at(j).GetEnergy(), true);
+            }
+            else {
+              if(sector_hits.at(i).GetCharge() < sector_hits.at(j).GetCharge()) sector_hits.at(i).SetSectorNumber(sector_hits.at(j).GetSector());
+  	      sector_hits.at(i).SetCharge(sector_hits.at(i).GetCharge() + sector_hits.at(j).GetCharge());
+            }
 	    US.at(j) = true;
     	    diagnostics[sector_hits.at(i).GetDetnum()%2][5]++;
 	  }

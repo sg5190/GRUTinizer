@@ -54,6 +54,8 @@ void drawPID(std::string filepath) {
       zline[i]->SetPoint(j,x,y);
     }
     //Draw TCutG
+    zline[i]->SetLineColor(kRed);
+    zline[i]->SetLineWidth(3);
     zline[i]->Draw("same");
     //Find out integral of histogram and output to terminal
     int gcount = zline[i]->IntegralHist(tmpHist);
@@ -157,6 +159,8 @@ void drawGate(std::string filepath) {
     zline->SetPoint(j,x,y);
   }
   //Draw TCutG
+  zline->SetLineColor(kRed);
+  zline->SetLineWidth(3);
   zline->Draw("same");
   //Find out integral of histogram and output to terminal
   int gcount = zline->IntegralHist(tmpHist);
