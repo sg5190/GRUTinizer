@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include "TGEBEvent.h"
+#include "TGRTEvent.h"
 #include "TGRUTOptions.h"
 #include "TNSCLEvent.h"
 #include "TRawEvent.h"
@@ -154,14 +155,18 @@ kDetectorSystems TDetectorEnv::DetermineSystem(TRawEvent& event) const {
   }
     break;
 
-  case GRETA_MODE2:
-  case GRETA_MODE3:
+  case GRETINA_MODE2:
+  case GRETINA_MODE3:
   {
     TGEBEvent& geb_event = (TGEBEvent&)event;
     source_id = geb_event.GetEventType();
   }
   break;
-
+  case GRETADAQ:
+  {
+    TGRTEvent& grt_event = (TGRTEvent&)event;
+    source_id = grt_event.GetEventType();
+  }
   default:
     break;
   }

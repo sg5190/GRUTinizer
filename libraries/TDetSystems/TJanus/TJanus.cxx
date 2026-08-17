@@ -69,9 +69,11 @@ void TJanus::Clear(Option_t* opt){
 /*******************************************************************************/
 int TJanus::BuildHits(std::vector<TRawEvent>& raw_data){
   long int smallest_timestamp = 0x7fffffffffffffff;
+  std::cout << "\n\nDDAS Size " << raw_data.size() << std::endl;
   for(auto& event : raw_data){
     //Get raw data and unpacks it as a DDAS Event (DDASDataFormat.h)
     TSmartBuffer buf = event.GetPayloadBuffer();
+    std::cout << "Buf Size " << buf.GetSize() << std::endl;
     TDDASEvent<DDASHeader> ddas(buf);
     unsigned int address = ( (5<<24) + (ddas.GetCrateID()<<16) + (ddas.GetSlotID()<<8) + ddas.GetChannelID() );
     //If channel not found in calibration file (*.cal) file skip and do nothing

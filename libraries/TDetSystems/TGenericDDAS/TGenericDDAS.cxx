@@ -61,7 +61,7 @@ int TGenericDDAS::BuildHits(std::vector<TRawEvent>& raw_data) {
   if(!fFileDetermined) {
     kFileType fFileType = raw_data.at(0).GetFileType();
     switch(fFileType) {
-      case GRETA_MODE2:
+      case GRETINA_MODE2:
 	fGEB = true;
         break;
       case NSCL_EVT:

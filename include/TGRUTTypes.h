@@ -33,8 +33,9 @@ extern std::map<std::string, kDetectorSystems> detector_system_map;
 enum kFileType {
   UNKNOWN_FILETYPE = -1,
   NSCL_EVT = 1,
-  GRETA_MODE2 = 2,
-  GRETA_MODE3 = 3,
+  GRETINA_MODE2 = 2,
+  GRETINA_MODE3 = 3,
+  GRETADAQ = 5,
   ROOT_DATA = 256,
   ROOT_MACRO = 257,
   CALIBRATED = 512,

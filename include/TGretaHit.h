@@ -119,18 +119,17 @@ public:
   void Copy(TObject& obj) const;
 
   void BuildFrom(TSmartBuffer& raw);
+  void BuildFromGRETA(TSmartBuffer& raw, int cryID);
+  void BuildMode2FromGRETA(TSmartBuffer& raw, int cryID);
 
-
-  Double_t GetTime()             const { return ((double)GetTimestamp() + (double)fT0)*10.; } //Return Time in ns
+  Double_t GetTime()             const { return ((double)GetTimestampNs() + (double)fT0/1000.); } //Return Time in ns
+//  Double_t GetTime()             const { return ((double)GetTimestamp() + (double)fT0)*10.; } //Return Time in ns
   Float_t  GetT0()               const { return fT0; }
   Int_t    GetCrystalId()        const { return fCrystalId;      }
-  Int_t    GetHoleNumber()       const { return fCrystalId/4-1;  }
+  Int_t    GetHoleNumber()       const { return fCrystalId/4;  }
   Int_t    GetCrystalNumber()    const { return fCrystalId%4;    }
   Int_t    GetSpecOrder()        const;
   Int_t    GetInverseSpecOrder() const;
-  Float_t  GetBaseline()	 const { return fBaseline; 	  }
-  Float_t  GetPoststep()	 const { return fPoststep;	  }
-  Float_t  GetPrestep()		 const { return fPrestep;	  }
   Float_t  GetChi2()		 const { return fChisq;           }
   Float_t  GetNormChi2()	 const { return fNormChisq;       }
   Int_t GetPad()                 const { return fPad; }
@@ -210,9 +209,6 @@ private:
 /* Float_t   cfd         -> TDetectorHit.fCfd **************/
 /* Float_t   chisq       -> TGretaHit.fChisq ***************/
 /* Float_t   norm_chisq ************************************/
-/* Float_t   baseline    -> TGretaHit.fBaseline ************/
-/* Float_t   prestep     -> TGretaHit.fPrestep *************/
-/* Float_t   poststep    -> TGretaHit.fPoststep ************/
 /* Int_t     pad         -> TGretaHit.fPad *****************/
 /***********************************************************/
 
@@ -222,9 +218,6 @@ private:
   Float_t         fT0;
   Float_t	  fChisq;
   Float_t	  fNormChisq;
-  Float_t	  fBaseline;
-  Float_t	  fPoststep;
-  Float_t	  fPrestep;
   mutable Int_t   fAB;
 
   std::vector<TGretaHit> fSingles;
@@ -232,6 +225,7 @@ private:
   std::vector<interaction_point> fSegments;
   static double fSmearWidth;
   static bool fSmear;
+
   ClassDef(TGretaHit,5)
 };
 

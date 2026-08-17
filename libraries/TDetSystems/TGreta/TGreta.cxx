@@ -7,6 +7,9 @@
 #include "TGreta.h"
 #include "TGEBEvent.h"
 
+bool TGreta::fFileDetermined = false;
+bool TGreta::fGRT = false;
+
 /*******************************************************************************/
 /* TGreta **********************************************************************/
 /* Main Class for Greta mode2 (Decomposed) analysis ****************************/
@@ -348,11 +351,38 @@ int TGreta::BuildHits(std::vector<TRawEvent>& raw_data){
     return GetSize();
   long smallest_time = 0x3fffffffffffffff;
 
+  if(!fFileDetermined) {
+    kFileType fFileType = raw_data.at(0).GetFileType();
+    switch(fFileType) {
+      case GRETINA_MODE2:
+        fGRT = false;
+        break;
+      case GRETADAQ:
+        fGRT = true;
+        break;
+      default:
+        break;
+    }
+  }
+
   for(auto& event : raw_data){
     if(event.GetTimestamp()<smallest_time) smallest_time = event.GetTimestamp();
     TGretaHit hit;
     TSmartBuffer buf = event.GetPayloadBuffer();
-    hit.BuildFrom(buf);
+    if(fGRT) {
+      int mode2 = event.GetEventType();
+      int cryId = event.GetSubType();
+//      if(cryId == 23) continue;
+//      std::cout << "\nCry" << cryId << "\t" << mode2 << "\t" << event.GetTimestamp() << std::endl;
+      if(mode2 == 2) {
+        hit.BuildMode2FromGRETA(buf, cryId);
+      }
+      else {
+        hit.BuildFromGRETA(buf, cryId);
+      }
+    } else {
+      hit.BuildFrom(buf);
+    }
     if(hit.GetPad() == 2 || hit.GetPad() == 3 || hit.GetPad() == 4 || hit.GetPad() == 6) continue;
     InsertHit(hit);
   }

@@ -13,6 +13,7 @@
 
 class TNSCLEvent;
 class TGEBEvent;
+class TGRTEvent;
 class TUnpackedEvent;
 
 class TDetector;
@@ -48,6 +49,8 @@ private:
   void HandleGEBData(TGEBEvent& event);
   void HandleGEBMode3(TGEBEvent& event, kDetectorSystems system);
   void HandleS800Scaler(TGEBEvent& event);
+
+  void HandleGRTData(TGRTEvent& event);
 
   TUnpackedEvent* fOutputEvent;
 

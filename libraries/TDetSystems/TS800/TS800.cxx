@@ -356,8 +356,9 @@ bool TS800::HandleSRSPacket(unsigned short *data,int size) {
 //  double tmpTa = 0.0;
   for(int iHit = 0; iHit < nHits; iHit++) {
 
-    int fecIdBuff = *(data++);
-    int vmmIdBuff = *(data++);
+//    int fecIdBuff = *(data++);
+//    int vmmIdBuff = *(data++);
+    data +=2;
     int chnoBuff = *(data++);
     int chnoMappedBuff = *(data++);
     int adcBuff = *(data++);

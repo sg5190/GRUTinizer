@@ -9,7 +9,9 @@
 #include "GValue.h"
 #include "TGEBEvent.h"
 #include "TGreta.h"
-//#include "TS800.h"
+
+#include <arpa/inet.h>
+#include <endian.h>
 
 TGretaHit::TGretaHit(){ Clear(); }
 
@@ -17,6 +19,7 @@ TGretaHit::~TGretaHit(){ }
 
 bool TGretaHit::fSmear = false;
 double TGretaHit::fSmearWidth = 0.2; // 2 mm
+
 /*******************************************************************************/
 /* Copies hit ******************************************************************/
 /*******************************************************************************/
@@ -33,9 +36,6 @@ void TGretaHit::Copy(TObject &rhs) const {
   ((TGretaHit&)rhs).fAB	            = fAB;
   ((TGretaHit&)rhs).fChisq          = fChisq;
   ((TGretaHit&)rhs).fNormChisq      = fNormChisq;
-  ((TGretaHit&)rhs).fBaseline	    = fBaseline;
-  ((TGretaHit&)rhs).fPrestep	    = fPrestep;
-  ((TGretaHit&)rhs).fPoststep	    = fPoststep;
 }
 
 /*******************************************************************************/
@@ -53,6 +53,154 @@ const char *TGretaHit::GetName() const {
 /*******************************************************************************/
 TVector3 TGretaHit::GetCrystalPosition()  const {
   return TGreta::GetCrystalPosition(fCrystalId);
+}
+
+/*******************************************************************************/
+/* Builds the TMode3Hit from GRETA DAQ using TSmartBuffer **********************/
+/*******************************************************************************/
+void TGretaHit::BuildFromGRETA(TSmartBuffer& buf, int cryID){
+  Clear();
+  cryID +=3;
+  auto data = (TRawEvent::waveformMsg*)buf.GetData();
+  buf.Advance(sizeof(TRawEvent::waveformMsg));
+
+  //This would be waveforms but for now just skip to the end of the event.
+  buf.Advance(buf.GetSize());
+
+  SetTimestamp(be64toh(data->timestamp), 10.);
+  SetEnergy(ntohl(data->ener[36])/128., false);
+  fT0 = ntohs(data->t0);
+  fCrystalId = cryID;
+  fAB = -1;
+
+  int board_id = ((cryID/4) << 8) ;  //hole  number : 0x1f00
+  board_id += ((cryID%4) << 6) ;  //x-tal number : 0x00c0
+  board_id += 9;                       //chan  number : 0x000f  information not available here(assume core).
+  SetAddress((1<<24) + board_id);
+  TChannel *channel = TChannel::GetChannel(GetAddress());
+  if(!channel) {
+    TChannel *newchan = new TChannel(Form("GRR%2.2iXN%2.2iX", cryID/4, cryID%4),GetAddress());
+    TChannel::AddChannel(newchan);
+  }
+
+  for(int i=36; i<40; i++){
+//    std::cout << i << std::hex << "\t" << ntohl(data->ener[i]) << std::dec << std::endl;
+    fCoreCharge[i-36] = ntohl(data->ener[i]/128.);
+  }
+  fChisq = 0;
+  fNormChisq = 0;
+
+  fPad = data->flags;
+  for(int i=0; i<36; i++) {
+    try {
+      interaction_point pnt;
+      pnt.fSeg  = i;
+      pnt.fX    = 0;
+      pnt.fY    = 0;
+      pnt.fZ    = 0;
+      pnt.fFrac = ntohl(data->ener[i])/128.;
+      pnt.fEng  = ntohl(data->ener[i])/128.;
+      fSegments.push_back(pnt);
+    } catch(...) {
+      std::cout << "in try catch block!" << std::endl;
+    }
+  }
+  std::sort(fSegments.begin(),fSegments.end());
+
+  if(0) {
+    std::cout << std::hex;
+    std::cout << BLUE << "Version:     \t" << DYELLOW << data->version() << RESET_COLOR << std::endl;
+    std::cout << BLUE << "Id:          \t" << DYELLOW << data->id() << RESET_COLOR << std::endl;
+    std::cout << BLUE << "CryId:       \t" << DYELLOW << cryID << RESET_COLOR << std::endl;
+    std::cout << BLUE << "Trace Length:\t" << DYELLOW << ntohs(data->tr_len) << RESET_COLOR << std::endl;
+    std::cout << BLUE << "Trig source: \t" << DYELLOW << ntohs(data->trig_src) << RESET_COLOR << std::endl;
+    std::cout << BLUE << "Flags:       \t" << DYELLOW << ntohs(data->flags) << RESET_COLOR << std::endl;
+    std::cout << BLUE << "Timestamp:   \t" << DYELLOW << data->timestamp << RESET_COLOR << std::endl;
+    std::cout << BLUE << "Pileup:      \t" << DYELLOW << be64toh(data->pileup) << RESET_COLOR << std::endl;
+    for(int i = 0; i < 2; i++) {
+      for(int j = 0; j < 2; j++) {
+        std::cout << BLUE << "Hist Corr[" << i << "][" << j  << "]:     \t" << DYELLOW << data->hist_corr[i][j] << RESET_COLOR << std::endl;
+      }
+    }
+    std::cout << BLUE << "T0:          \t" << DYELLOW << ntohs(data->t0) << RESET_COLOR << std::endl;
+    std::cout << BLUE << "Sub_T0:      \t" << DYELLOW << ntohs(data->sub_t0) << RESET_COLOR << std::endl;
+    std::cout << BLUE << "T_led Core:  \t" << DYELLOW << ntohs(data->t_led_core) << RESET_COLOR << std::endl;
+    std::cout << BLUE << "T_cfd_core:  \t" << DYELLOW << ntohs(data->t_cfd_core) << RESET_COLOR << std::endl;
+    std::cout << BLUE << "T_led_first  \t" << DYELLOW << ntohs(data->t_led_first) << RESET_COLOR << std::endl;
+    std::cout << BLUE << "T_postpilup: \t" << DYELLOW << ntohs(data->t_postpileup) << RESET_COLOR << std::endl;
+    std::cout << BLUE << "T_overflow:  \t" << DYELLOW << ntohs(data->t_ovfl) << RESET_COLOR << std::endl;
+    std::cout << BLUE << "T_reset:     \t" << DYELLOW << ntohs(data->t_rst) << RESET_COLOR << std::endl;
+    for(int i = 0; i < 40; i++) {
+      std::cout << BLUE << "Energy[" << i << "]:          \t" << DYELLOW << data->ener[i] << RESET_COLOR << std::endl;
+      std::cout << BLUE << "Energy[" << i << "]:          \t" << DYELLOW << ntohl(data->ener[i]) << RESET_COLOR << std::endl;
+    }
+
+    for(int i = 0; i < 40; i++) {
+      std::cout << BLUE << "TraceLen[" << i << "]:          \t" << DYELLOW << data->comp_tr_lens[i] << RESET_COLOR << std::endl;
+    }
+  }
+
+//  abort();
+//  fAbort++;
+//  if(fAbort > 10) abort();
+}
+
+/*******************************************************************************/
+/* Builds the Decomp mode2 from GRETA DAQ using TSmartBuffer *******************/
+/*******************************************************************************/
+void TGretaHit::BuildMode2FromGRETA(TSmartBuffer& buf, int cryID){
+  Clear();
+  //Make GRETA CryID == GRETINA ID
+  cryID +=3;
+  auto data = (TRawEvent::gretaIntPtMsg*)buf.GetData();
+  buf.Advance(sizeof(TRawEvent::gretaIntPtMsg));
+
+  SetTimestamp(data->timestamp, 10.);
+  //Decomp Energy is in eV
+  SetEnergy(data->ener[36]/1000., false);
+  fT0 = data->t0;
+  fCrystalId = cryID;
+  fAB = -1;
+
+  int board_id = ((cryID/4) << 8) ;  //hole  number : 0x1f00
+  board_id += ((cryID%4) << 6) ;  //x-tal number : 0x00c0
+  board_id += 9;                       //chan  number : 0x000f  information not available here(assume core).
+  SetAddress((1<<24) + board_id);
+  TChannel *channel = TChannel::GetChannel(GetAddress());
+  if(!channel) {
+    TChannel *newchan = new TChannel(Form("GRR%2.2iXN%2.2iX", cryID/4, cryID%4),GetAddress());
+    TChannel::AddChannel(newchan);
+  }
+  //Charge of 4 Core signals
+  for(int i=36; i<40; i++){
+    fCoreCharge[i-36] = data->ener[i]/1000.;
+  }
+
+  //Event format gives
+  auto ipfit = (TRawEvent::intPtFit*)buf.GetData();
+  buf.Advance(sizeof(TRawEvent::intPtFit));
+
+  fChisq = ipfit->chisq;
+  fNormChisq = ipfit->norm_chisq;
+  fPad = ipfit->pad;
+
+  for(int i=0; i < ipfit->num_interactions; i++) {
+    try {
+      auto ip = (TRawEvent::intPt*)buf.GetData();
+      buf.Advance(sizeof(TRawEvent::intPt));
+      interaction_point pnt;
+      pnt.fSeg  = ip->seg;
+      pnt.fX    = ip->x;
+      pnt.fY    = ip->y;
+      pnt.fZ    = ip->z;
+      pnt.fFrac = ip->e;
+      pnt.fEng  = data->ener[ip->seg]/1000.;
+      fSegments.push_back(pnt);
+    } catch(...) {
+      std::cout << "in try catch block!" << std::endl;
+    }
+  }
+  std::sort(fSegments.begin(),fSegments.end());
 }
 
 /*******************************************************************************/
@@ -87,12 +235,9 @@ void TGretaHit::BuildFrom(TSmartBuffer& buf){
   }
   fChisq = raw.chisq;
   fNormChisq = raw.norm_chisq;
-  fBaseline = raw.baseline;
-  fPrestep = raw.prestep;
-  fPoststep = raw.poststep;
 
   fPad = raw.pad;
-  for(int i=0; i<raw.num; i++) {
+  for(int i=0; i< raw.num; i++) {
     try {
       interaction_point pnt;
       pnt.fSeg = raw.intpts[i].seg;

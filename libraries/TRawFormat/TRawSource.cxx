@@ -139,8 +139,9 @@ std::string TRawEventTimestampSource::Status(bool long_description) const {
 int TRawEventTimestampSource::GetEvent(TRawEvent& rawevent) {
   switch(fFileType) {
     case kFileType::NSCL_EVT:
-    case kFileType::GRETA_MODE2:
-    case kFileType::GRETA_MODE3:
+    case kFileType::GRETINA_MODE2:
+    case kFileType::GRETINA_MODE3:
+    case kFileType::GRETADAQ:
       break;
 
     default:

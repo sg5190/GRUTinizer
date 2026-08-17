@@ -9,8 +9,10 @@
 #include "TString.h"
 
 #include "TGEBEvent.h"
+#include "TGRTEvent.h"
 #include "TNSCLEvent.h"
-
+#include <arpa/inet.h>
+#include <endian.h> 
 ClassImp(TRawEvent)
 
 TRawEvent::TRawEvent() {
@@ -66,10 +68,11 @@ Int_t TRawEvent::GetEventType() const {
   switch(fFileType){
   case NSCL_EVT:
     return ((EVTHeader*)(&fEventHeader))->type();
-    
-  case GRETA_MODE2:
-  case GRETA_MODE3:
+  case GRETINA_MODE2:
+  case GRETINA_MODE3:
     return ((GEBHeader*)(&fEventHeader))->type();
+  case GRETADAQ:
+    return ((GRTroutingHdr*)(&fEventHeader))->type();
 
   default:
     ;
@@ -78,15 +81,29 @@ Int_t TRawEvent::GetEventType() const {
   return 0;
 }
 
+Int_t TRawEvent::GetSubType() const {
+  assert(fFileType != kFileType::UNKNOWN_FILETYPE);
+  switch(fFileType){
+  case GRETADAQ:
+    return ((GRTroutingHdr*)(&fEventHeader))->subtype();
+  default:
+    ;
+  }
+  return 0;
+}
+
+
 Int_t TRawEvent::GetBodySize() const {
   switch(fFileType){
   case NSCL_EVT:
     return ((EVTHeader*)(&fEventHeader))->size() - sizeof(RawHeader); //Size in nscldaq is inclusive
 
-  case GRETA_MODE2:
-  case GRETA_MODE3:
+  case GRETINA_MODE2:
+  case GRETINA_MODE3:
     return ((GEBHeader*)(&fEventHeader))->size() + sizeof(Long_t);  //Size in gretadaq is exclusive, plus timestamp
 
+  case GRETADAQ:
+    return ntohs(((GRTroutingHdr*)(&fEventHeader))->length()) + sizeof(Long_t) + sizeof(Long_t);  //Size in gretadaq is exclusive
   default:
     return 0;
   }
@@ -100,9 +117,9 @@ Long_t TRawEvent::GetTimestamp() const {
   }
 
   if( fFileType == kFileType::UNKNOWN_FILETYPE) {
-    printf("Unknown filetype: Size = %i\n",GetTotalSize());
+    printf("TSUnknown filetype: Size = %i\n",GetTotalSize());
     fflush(stdout);
-    Print("all");
+//    Print("all");
     //return 0;
   }
   assert(fFileType != kFileType::UNKNOWN_FILETYPE);
@@ -111,11 +128,13 @@ Long_t TRawEvent::GetTimestamp() const {
    case NSCL_EVT:
      return ((TNSCLEvent*)this)->GetTimestamp();
 
-   case GRETA_MODE2:
-   case GRETA_MODE3:
+   case GRETINA_MODE2:
+   case GRETINA_MODE3:
      return ((TGEBEvent*)this)->GetTimestamp();
-
+   case GRETADAQ:
+     return ((TGRTEvent*)this)->GetTimestamp();
    default:
+       return 0;
      ;
   }
 
@@ -124,7 +143,7 @@ Long_t TRawEvent::GetTimestamp() const {
 
 const char* TRawEvent::GetPayload() const {
   if( fFileType == kFileType::UNKNOWN_FILETYPE) {
-    printf("Unknown filetype: Size = %i\n",GetTotalSize());
+    printf("PLUnknown filetype: Size = %i\n",GetTotalSize());
     fflush(stdout);
     Print("all");
     //return 0;
@@ -135,10 +154,12 @@ const char* TRawEvent::GetPayload() const {
    case NSCL_EVT:
      return ((TNSCLEvent*)this)->GetPayload();
 
-   case GRETA_MODE2:
-   case GRETA_MODE3:
+   case GRETINA_MODE2:
+   case GRETINA_MODE3:
      return ((TGEBEvent*)this)->GetPayload();
 
+   case GRETADAQ:
+     return ((TGRTEvent*)this)->GetPayload();
    default:
      ;
   }
@@ -148,7 +169,7 @@ const char* TRawEvent::GetPayload() const {
 
 TSmartBuffer TRawEvent::GetPayloadBuffer() const {
   if( fFileType == kFileType::UNKNOWN_FILETYPE) {
-    printf("Unknown filetype: Size = %i\n",GetTotalSize());
+    printf("PBUnknown filetype: Size = %i\n",GetTotalSize());
     fflush(stdout);
     Print("all");
     //return 0;
@@ -159,12 +180,14 @@ TSmartBuffer TRawEvent::GetPayloadBuffer() const {
    case NSCL_EVT:
      return ((TNSCLEvent*)this)->GetPayloadBuffer();
 
-   case GRETA_MODE2:
-   case GRETA_MODE3:
+   case GRETINA_MODE2:
+   case GRETINA_MODE3:
      return ((TGEBEvent*)this)->GetPayloadBuffer();
+ 
+  case GRETADAQ:
+     return ((TGRTEvent*)this)->GetPayloadBuffer();
 
-   default:
-     ;
+   default: ;
   }
 
   return TSmartBuffer();
@@ -191,7 +214,7 @@ void TRawEvent::Print(Option_t *opt) const {
   TString options(opt);
   if(!options.Contains("bodyonly"))
     std::cout << fEventHeader;
-  std::cout << "Timestamp: " << GetTimestamp() << std::endl;
+  std::cout << "RETimestamp: " << GetTimestamp() << std::endl;
   fBody.Print(options.Data());
    printf("\t");
    for(int x=0; x<GetBodySize(); x+=2) {

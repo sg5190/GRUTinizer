@@ -13,8 +13,8 @@
 namespace {
   bool IsGEBData(TRawEvent& event) {
     auto file_type = event.GetFileType();
-    return file_type == kFileType::GRETA_MODE2 ||
-      file_type == kFileType::GRETA_MODE3;
+    return file_type == kFileType::GRETINA_MODE2 ||
+      file_type == kFileType::GRETINA_MODE3;
   }
 
   bool IsGEBData(TUnpackedEvent& event) {

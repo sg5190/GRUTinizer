@@ -52,12 +52,23 @@ public:
   static bool IsNeighbour(int ID1, int ID2) {SetGretNeighbours(); return gretNeighbour[ID1][ID2];}
   static bool IsNeighbour(const TGretaHit &a, const TGretaHit &b, bool timegate=true) {
     bool tmpB = false;
+    if(a.GetCrystalId() == 92 || b.GetCrystalId() == 92) return false;
     tmpB = IsNeighbour(a.GetCrystalId(),b.GetCrystalId());
     if(!timegate) return tmpB;
-    if(abs(a.GetTime()-b.GetTime()) < 50) {
+    if(abs(a.GetTimestamp()-b.GetTimestamp()) < 100) {
       return tmpB;
     } else return false;
   }
+
+//  static bool IsNeighbour(const TGretaHit &a, const TGretaHit &b, bool timegate=false) {
+//    bool tmpB = false;
+//    tmpB = IsNeighbour(a.GetCrystalId(),b.GetCrystalId());
+//    if(abs(a.GetTimestamp()-b.GetTimestamp()) < 100) {
+//      if(timegate) return tmpB;
+//      if(a.GetHoleNumber() == b.GetHoleNumber()) return tmpB;
+//      else return false;
+//    } else return false;
+//  }
 
   const std::vector<TGretaHit> &GetAllHits() const { return greta_hits; }
 
@@ -84,6 +95,9 @@ private:
   static void SetSpecId();
   static std::map<int, int> fThetaCryMap;
   static bool fSetSpec;
+  static bool fFileDetermined;
+  static bool fGRT;
+
   ClassDef(TGreta,3);
 };
 

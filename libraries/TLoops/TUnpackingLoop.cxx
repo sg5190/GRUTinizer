@@ -6,6 +6,7 @@
 //#include "RawDataQueue.h"
 //#include "RawDataQueue.h"
 #include "TGEBEvent.h"
+#include "TGRTEvent.h"
 #include "TGRUTOptions.h"
 #include "TNSCLEvent.h"
 
@@ -57,14 +58,18 @@ bool TUnpackingLoop::Iteration(){
       }
         break;
 
-      case kFileType::GRETA_MODE2:
-      case kFileType::GRETA_MODE3:
+      case kFileType::GRETINA_MODE2:
+      case kFileType::GRETINA_MODE3:
       {
         TGEBEvent geb_event(raw_event);
         HandleGEBData(geb_event);
       }
         break;
-
+      case kFileType::GRETADAQ:
+      {
+        TGRTEvent grt_event(raw_event);
+        HandleGRTData(grt_event);
+      }
       default:
         //printf("default\n"); fflush(stdout);
         break;
@@ -183,7 +188,6 @@ void TUnpackingLoop::HandleS800Scaler(TGEBEvent& event){
 
 void TUnpackingLoop::HandleGEBData(TGEBEvent& event){
   int type = event.GetEventType();
-
   switch(type) {
     case 1: // Greta decomp data.
       fOutputEvent->AddRawData(event, kDetectorSystems::GRETA);
@@ -228,4 +232,32 @@ void TUnpackingLoop::HandleGEBData(TGEBEvent& event){
       std::cout << "Unknown EventType: " << type << std::endl;
       break;
   }
+}
+
+
+void TUnpackingLoop::HandleGRTData(TGRTEvent& event){
+  int type = event.GetEventType();
+  //Subtype not currently used but might be for some aux detector
+//  int subtype = event.GetSubType();
+//std::cout << "\n" << std::endl;
+//std::cout << type << "\t" << event.GetSubType() << "\t" << event.GetBodySize() << std::endl;
+//std::cout << "\n" << std::endl;
+  //Events with 0 timestamp cause problems
+  if(event.GetTimestamp() > 100) {
+    switch(type) {
+      //GRETA data, GRETA detector class differentiates data types
+      case 2: // Greta Mode2 data
+      case 3: // Greta Mode3 data.
+      case 4: // Greta Mode3 compressed waveform.
+        fOutputEvent->AddRawData(event, kDetectorSystems::GRETA);
+        break;
+      case 221: // DDAS (JANUS) type 0xDD
+        fOutputEvent->AddRawData(event, kDetectorSystems::JANUS);
+        break;
+      default:
+        std::cout << "Unknown EventType: " << type << std::endl;
+        break;
+    }
+  }
+//abort();
 }

@@ -44,6 +44,7 @@ public:
   kFileType GetFileType() { return fFileType; }
 
   Int_t  GetEventType() const;
+  Int_t  GetSubType()   const;
   Int_t  GetTotalSize() const;
   Int_t  GetBodySize()  const;
   Long_t GetTimestamp() const;
